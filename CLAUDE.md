@@ -63,3 +63,17 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+---
+
+## Project: Montagu Square Day Nursery portal
+
+Next.js 16 (App Router) + Supabase + Tailwind. See README.md for roles, modules and setup.
+Next.js 16 differs from older versions: read `node_modules/next/dist/docs/` before using an unfamiliar API (see AGENTS.md).
+
+- Check: `npm run lint && npm run typecheck && npm test && npm run test:db`
+- Database changes: new file in `supabase/migrations/`, access-rule tests in `supabase/tests/access_rules.sql`, then `npm run db:types`.
+- Security model: access rules live in the database (RLS). Server code uses the user's client (`src/lib/supabase/server.ts`); the service-role client (`admin.ts`) is only for invites, storage and the cron job, after `requireSession(...)` has checked the role.
+- Every page and server action starts with `requireSession(...)` from `src/lib/auth.ts`.
+- New modules: register nav links in `src/modules/registry.ts`.
+- Dates are `YYYY-MM-DD` strings; use `src/lib/dates.ts` (UK time via `todayInLondon()`).
