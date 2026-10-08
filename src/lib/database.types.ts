@@ -71,14 +71,14 @@ isOneToOne: false
                   ]
                 },"employees": {
                   Row: {
-                    "address_line1": string | null,"address_line2": string | null,"created_at": string,"date_of_birth": string | null,"email": string | null,"employee_number": string | null,"first_name": string,"home_phone": string | null,"id": string,"job_title": string | null,"last_name": string,"leave_date": string | null,"leave_reason": string | null,"mobile_phone": string | null,"payroll_id": string | null,"postcode": string | null,"profile_id": string | null,"qualification_level": string | null,"start_date": string | null,"starter_form_completed_at": string | null,"town": string | null,"updated_at": string
+                    "address_line1": string | null,"address_line2": string | null,"created_at": string,"date_of_birth": string | null,"email": string | null,"emergency_contact_name": string | null,"emergency_contact_phone": string | null,"emergency_contact_relationship": string | null,"employee_number": string | null,"first_name": string,"home_phone": string | null,"id": string,"job_title": string | null,"last_name": string,"leave_date": string | null,"leave_reason": string | null,"mobile_phone": string | null,"ni_number": string | null,"payroll_id": string | null,"postcode": string | null,"profile_id": string | null,"qualification_level": string | null,"start_date": string | null,"starter_form_completed_at": string | null,"town": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "address_line1"?: string | null,"address_line2"?: string | null,"created_at"?: string,"date_of_birth"?: string | null,"email"?: string | null,"employee_number"?: string | null,"first_name": string,"home_phone"?: string | null,"id"?: string,"job_title"?: string | null,"last_name": string,"leave_date"?: string | null,"leave_reason"?: string | null,"mobile_phone"?: string | null,"payroll_id"?: string | null,"postcode"?: string | null,"profile_id"?: string | null,"qualification_level"?: string | null,"start_date"?: string | null,"starter_form_completed_at"?: string | null,"town"?: string | null,"updated_at"?: string
+                    "address_line1"?: string | null,"address_line2"?: string | null,"created_at"?: string,"date_of_birth"?: string | null,"email"?: string | null,"emergency_contact_name"?: string | null,"emergency_contact_phone"?: string | null,"emergency_contact_relationship"?: string | null,"employee_number"?: string | null,"first_name": string,"home_phone"?: string | null,"id"?: string,"job_title"?: string | null,"last_name": string,"leave_date"?: string | null,"leave_reason"?: string | null,"mobile_phone"?: string | null,"ni_number"?: string | null,"payroll_id"?: string | null,"postcode"?: string | null,"profile_id"?: string | null,"qualification_level"?: string | null,"start_date"?: string | null,"starter_form_completed_at"?: string | null,"town"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "address_line1"?: string | null,"address_line2"?: string | null,"created_at"?: string,"date_of_birth"?: string | null,"email"?: string | null,"employee_number"?: string | null,"first_name"?: string,"home_phone"?: string | null,"id"?: string,"job_title"?: string | null,"last_name"?: string,"leave_date"?: string | null,"leave_reason"?: string | null,"mobile_phone"?: string | null,"payroll_id"?: string | null,"postcode"?: string | null,"profile_id"?: string | null,"qualification_level"?: string | null,"start_date"?: string | null,"starter_form_completed_at"?: string | null,"town"?: string | null,"updated_at"?: string
+                    "address_line1"?: string | null,"address_line2"?: string | null,"created_at"?: string,"date_of_birth"?: string | null,"email"?: string | null,"emergency_contact_name"?: string | null,"emergency_contact_phone"?: string | null,"emergency_contact_relationship"?: string | null,"employee_number"?: string | null,"first_name"?: string,"home_phone"?: string | null,"id"?: string,"job_title"?: string | null,"last_name"?: string,"leave_date"?: string | null,"leave_reason"?: string | null,"mobile_phone"?: string | null,"ni_number"?: string | null,"payroll_id"?: string | null,"postcode"?: string | null,"profile_id"?: string | null,"qualification_level"?: string | null,"start_date"?: string | null,"starter_form_completed_at"?: string | null,"town"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -154,6 +154,32 @@ isOneToOne: false
       columns: ["employee_id"]
 isOneToOne: false
       referencedRelation: "employees"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"p45s": {
+                  Row: {
+                    "employee_id": string,"id": string,"storage_path": string,"uploaded_at": string,"uploaded_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "employee_id": string,"id"?: string,"storage_path": string,"uploaded_at"?: string,"uploaded_by"?: string | null
+                  }
+                  Update: {
+                    "employee_id"?: string,"id"?: string,"storage_path"?: string,"uploaded_at"?: string,"uploaded_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "p45s_employee_id_fkey"
+      columns: ["employee_id"]
+isOneToOne: true
+      referencedRelation: "employees"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "p45s_uploaded_by_fkey"
+      columns: ["uploaded_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -268,7 +294,7 @@ isOneToOne: false
 { Args: { "p_contract_id": string,"p_ip": string,"p_signed_name": string,"p_user_agent": string }; Returns: undefined
                            },
 "submit_starter_form":
-{ Args: { "p_address_line1": string,"p_address_line2": string,"p_date_of_birth": string,"p_email": string,"p_home_phone": string,"p_mobile_phone": string,"p_other_qualifications": Json,"p_postcode": string,"p_qualification_level": string,"p_town": string }; Returns: undefined
+{ Args: { "p_address_line1": string,"p_address_line2": string,"p_date_of_birth": string,"p_email": string,"p_emergency_contact_name": string,"p_emergency_contact_phone": string,"p_emergency_contact_relationship": string,"p_home_phone": string,"p_mobile_phone": string,"p_ni_number": string,"p_other_qualifications": Json,"p_postcode": string,"p_qualification_level": string,"p_town": string }; Returns: undefined
                            }
           }
           Enums: {

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { signedUrl, type Bucket } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 
-const buckets: Bucket[] = ["contracts", "policies", "payslips"];
+const buckets: Bucket[] = ["contracts", "policies", "payslips", "p45s"];
 
 // Opens a stored PDF. The record is looked up as the signed-in user, so the
 // database's access rules decide whether they may see it; only then is a

@@ -57,6 +57,8 @@ insert into policies (id, title, storage_path) values
   ('30000000-0000-0000-0000-000000000001', 'Safeguarding', 'pol/1.pdf');
 insert into policies (title, storage_path, archived) values ('Old policy', 'pol/0.pdf', true);
 
+insert into p45s (employee_id, storage_path) values ('10000000-0000-0000-0000-000000000002', 'p45/2.pdf');
+
 insert into onboarding_tasks (employee_id, title) values
   ('10000000-0000-0000-0000-000000000001', 'DBS check');
 
@@ -69,6 +71,7 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a', 'aal2');
 select pg_temp.expect((select count(*) from profiles), 5::bigint, 'admin sees all profiles');
 select pg_temp.expect((select count(*) from employees), 2::bigint, 'admin sees all employees');
 select pg_temp.expect((select count(*) from payslips), 2::bigint, 'admin sees all payslips');
+select pg_temp.expect((select count(*) from p45s), 1::bigint, 'admin sees P45s');
 select pg_temp.expect((select count(*) from policies), 2::bigint, 'admin sees archived policies too');
 update notification_settings set weekly_digest_day = 3;
 select pg_temp.expect((select weekly_digest_day from notification_settings), 3, 'admin edits notification settings');
@@ -87,6 +90,7 @@ select pg_temp.expect((select count(*) from employees), 2::bigint, 'manager sees
 select pg_temp.expect((select count(*) from contracts), 2::bigint, 'manager sees all contracts');
 select pg_temp.expect((select count(*) from onboarding_tasks), 1::bigint, 'manager sees onboarding tasks');
 select pg_temp.expect((select count(*) from payslips), 0::bigint, 'manager cannot see payslips');
+select pg_temp.expect((select count(*) from p45s), 0::bigint, 'manager cannot see P45s');
 select pg_temp.expect((select count(*) from profiles), 1::bigint, 'manager sees only own profile');
 insert into employees (first_name, last_name) values ('New', 'Starter');
 update employees set job_title = 'Room leader' where payroll_id = 'P1';
@@ -104,6 +108,7 @@ select pg_temp.expect((select count(*) from employees), 1::bigint, 'staff sees o
 select pg_temp.expect((select payroll_id from employees), 'P1', 'staff sees the right record');
 select pg_temp.expect((select count(*) from contracts), 1::bigint, 'staff sees only own contracts');
 select pg_temp.expect((select count(*) from payslips), 1::bigint, 'staff sees only own payslips');
+select pg_temp.expect((select count(*) from p45s), 0::bigint, 'staff cannot see another employee''s P45');
 select pg_temp.expect((select count(*) from policies), 1::bigint, 'staff sees live policies only');
 select pg_temp.expect((select count(*) from onboarding_tasks), 0::bigint, 'staff cannot see onboarding tasks');
 
@@ -120,8 +125,21 @@ insert into policy_acknowledgements (policy_id, employee_id, recorded_by) values
   ('30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000c');
 
 select submit_starter_form('1990-01-31', '1 High St', null, 'London', 'W1H 1AA', '07700900000', null,
-  'sam@example.com', 'Level 3', '[{"name": "Paediatric first aid", "achieved_on": "2025-05-01"}, {"name": ""}]'::jsonb);
+  'sam@example.com', 'Level 3', '[{"name": "Paediatric first aid", "achieved_on": "2025-05-01"}, {"name": ""}]'::jsonb,
+  'QQ123456C', 'Pat One', 'Parent', '07700900001');
 select pg_temp.expect((select postcode from employees), 'W1H 1AA', 'starter form updates own record');
+select pg_temp.expect((select ni_number || '/' || emergency_contact_name from employees), 'QQ123456C/Pat One',
+  'starter form saves NI number and emergency contact');
+
+insert into p45s (employee_id, storage_path, uploaded_by) values
+  ('10000000-0000-0000-0000-000000000001', 'p45/1.pdf', '00000000-0000-0000-0000-00000000000c');
+select pg_temp.expect((select count(*) from p45s), 1::bigint, 'staff uploads and reads own P45');
+do $$ begin
+  insert into p45s (employee_id, storage_path, uploaded_by) values
+    ('10000000-0000-0000-0000-000000000002', 'p45/x.pdf', '00000000-0000-0000-0000-00000000000c');
+  raise exception 'FAIL: staff uploaded a P45 for someone else';
+exception when insufficient_privilege then null;
+end $$;
 select pg_temp.expect((select count(*) from employee_qualifications), 1::bigint, 'starter form saves non-blank qualifications');
 
 do $$ begin
@@ -155,6 +173,7 @@ update profiles set active = false where email = 'staff1@example.com';
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000c', 'aal1');
 select pg_temp.expect((select count(*) from employees), 0::bigint, 'deactivated staff sees nothing');
 select pg_temp.expect((select count(*) from payslips), 0::bigint, 'deactivated staff sees no payslips');
+select pg_temp.expect((select count(*) from p45s), 0::bigint, 'deactivated staff sees no P45');
 select pg_temp.sign_out();
 
 -- Signed-out (anon) sees nothing ---------------------------------------------

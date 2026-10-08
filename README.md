@@ -13,6 +13,7 @@ Tailwind CSS. Designed to be hosted on Vercel, with Supabase's London region.
 | Two-step sign-in (authenticator app) | Required | Required | — |
 | Staff directory, records, contracts, onboarding | ✔ | ✔ | Own record only |
 | Payslips | All (upload & view) | Own only | Own only |
+| P45s | All (upload & view) | Own only | Own only |
 | Policies & handbook | Publish & archive | Read, see who's acknowledged | Read & acknowledge |
 | Onboarding checklist template | Edit | View | — |
 | Users (invite, roles, deactivate, reset 2FA) | ✔ | — | — |
@@ -28,8 +29,8 @@ after the database confirms the person may see them.
 
 - **Staff directory** – current staff by default, toggle to all staff (leavers).
   Name, DOB, address, phone numbers, email, start date, qualification level,
-  other qualifications, job title, employee ID, payroll ID, leave date and
-  reason, and length of service (worked out automatically; stops at the leave date).
+  other qualifications, job title, employee ID, payroll ID, National Insurance
+  number, emergency contact, leave date and reason, and length of service (worked out automatically; stops at the leave date).
 - **Contracts** – send a PDF for electronic signature (the employee reads it,
   ticks to agree and types their name; the date, time, IP address and a
   SHA-256 fingerprint of the exact file are recorded), or upload a paper-signed copy.
@@ -37,7 +38,8 @@ after the database confirms the person may see them.
   confirm "I have read and understood this" themselves in the handbook.
 - **Onboarding** – every new employee gets the standard checklist (editable by
   admins); managers tick tasks off. Invite a new starter to the portal and they
-  fill in the **new starter form**, which goes straight into their record.
+  fill in the **new starter form** (including NI number, emergency contact and
+  an optional P45 upload), which goes straight into their record.
 - **Policies & handbook** – PDFs for everyone to read.
 - **Payslips** – export the PDFs from QuickBooks and bulk-upload them; each is
   matched to an employee by the payroll ID in its file name.

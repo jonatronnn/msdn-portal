@@ -2,7 +2,8 @@ import { ActionForm } from "@/components/action-form";
 import { Badge, Card, DetailList, Empty, Field, Input, PageHeader, Select } from "@/components/ui";
 import { requireSession } from "@/lib/auth";
 import { formatDate, formatLengthOfService, todayInLondon } from "@/lib/dates";
-import { formatAddress, QUALIFICATION_LEVELS } from "@/lib/staff";
+import { formatAddress, formatNiNumber, QUALIFICATION_LEVELS } from "@/lib/staff";
+import { MAX_FILE_MB } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { submitStarterForm } from "./actions";
 
@@ -52,6 +53,21 @@ export default async function MePage({ searchParams }: PageProps<"/me">) {
               <Field label="Home phone">
                 <Input name="home_phone" type="tel" defaultValue={e.home_phone ?? ""} />
               </Field>
+              <Field label="National Insurance number *" hint="You'll find it on a payslip, P60 or letters from HMRC.">
+                <Input name="ni_number" defaultValue={formatNiNumber(e.ni_number)} placeholder="AB 12 34 56 C" required />
+              </Field>
+            </fieldset>
+            <fieldset className="grid gap-4 sm:grid-cols-3">
+              <legend className="mb-2 font-semibold">Emergency contact</legend>
+              <Field label="Name *">
+                <Input name="emergency_contact_name" defaultValue={e.emergency_contact_name ?? ""} required />
+              </Field>
+              <Field label="Relationship to you *">
+                <Input name="emergency_contact_relationship" defaultValue={e.emergency_contact_relationship ?? ""} required />
+              </Field>
+              <Field label="Phone *">
+                <Input name="emergency_contact_phone" type="tel" defaultValue={e.emergency_contact_phone ?? ""} required />
+              </Field>
             </fieldset>
             <fieldset className="grid gap-4 sm:grid-cols-2">
               <legend className="mb-2 font-semibold">Home address</legend>
@@ -85,6 +101,15 @@ export default async function MePage({ searchParams }: PageProps<"/me">) {
                 </div>
               ))}
             </fieldset>
+            <fieldset className="space-y-2">
+              <legend className="mb-2 font-semibold">P45</legend>
+              <Field
+                label="Upload your P45 from your last job (PDF)"
+                hint={`If you don't have one, leave this blank and the office will talk to you about a starter checklist. Up to ${MAX_FILE_MB}MB.`}
+              >
+                <Input name="p45" type="file" accept="application/pdf" />
+              </Field>
+            </fieldset>
           </ActionForm>
         </Card>
       </>
@@ -104,9 +129,19 @@ export default async function MePage({ searchParams }: PageProps<"/me">) {
             ["Mobile", e.mobile_phone],
             ["Home phone", e.home_phone],
             ["Home address", formatAddress(e)],
+            ["National Insurance number", formatNiNumber(e.ni_number)],
           ]}
         />
         <p className="mt-4 text-xs text-stone-500">To change any of these, please speak to the nursery office.</p>
+      </Card>
+      <Card title="Emergency contact">
+        <DetailList
+          items={[
+            ["Name", e.emergency_contact_name],
+            ["Relationship", e.emergency_contact_relationship],
+            ["Phone", e.emergency_contact_phone],
+          ]}
+        />
       </Card>
       <Card title="Employment">
         <DetailList

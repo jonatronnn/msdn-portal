@@ -1,6 +1,6 @@
 import { Field, Input, Select, Textarea } from "@/components/ui";
 import type { Database } from "@/lib/database.types";
-import { QUALIFICATION_LEVELS } from "@/lib/staff";
+import { formatNiNumber, QUALIFICATION_LEVELS } from "@/lib/staff";
 
 type Employee = Partial<Database["public"]["Tables"]["employees"]["Row"]>;
 
@@ -47,6 +47,19 @@ export function EmployeeFields({ employee = {} }: { employee?: Employee }) {
       </fieldset>
 
       <fieldset className="grid gap-4 sm:grid-cols-2">
+        <legend className="mb-2 font-semibold">Emergency contact</legend>
+        <Field label="Name">
+          <Input name="emergency_contact_name" defaultValue={v(employee.emergency_contact_name)} />
+        </Field>
+        <Field label="Relationship">
+          <Input name="emergency_contact_relationship" defaultValue={v(employee.emergency_contact_relationship)} />
+        </Field>
+        <Field label="Phone">
+          <Input name="emergency_contact_phone" type="tel" defaultValue={v(employee.emergency_contact_phone)} />
+        </Field>
+      </fieldset>
+
+      <fieldset className="grid gap-4 sm:grid-cols-2">
         <legend className="mb-2 font-semibold">Employment</legend>
         <Field label="Job title">
           <Input name="job_title" defaultValue={v(employee.job_title)} />
@@ -59,6 +72,9 @@ export function EmployeeFields({ employee = {} }: { employee?: Employee }) {
         </Field>
         <Field label="Payroll ID" hint="Must match the payroll ID in QuickBooks payslip file names.">
           <Input name="payroll_id" defaultValue={v(employee.payroll_id)} />
+        </Field>
+        <Field label="National Insurance number">
+          <Input name="ni_number" defaultValue={formatNiNumber(employee.ni_number ?? null)} placeholder="AB 12 34 56 C" />
         </Field>
         <Field label="Qualification level">
           <Select name="qualification_level" defaultValue={v(employee.qualification_level)}>

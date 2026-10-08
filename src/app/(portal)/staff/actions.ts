@@ -7,10 +7,12 @@ import { requireSession } from "@/lib/auth";
 import { escapeHtml, sendEmail } from "@/lib/email";
 import { env } from "@/lib/env";
 import { inviteUser } from "@/lib/invite";
+import { NI_NUMBER_ERROR, normaliseNiNumber } from "@/lib/staff";
 import { removeFile, storePdf } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 
 function employeeFields(formData: FormData) {
+  const ni = text(formData, "ni_number");
   return {
     first_name: text(formData, "first_name") ?? "",
     last_name: text(formData, "last_name") ?? "",
@@ -29,11 +31,16 @@ function employeeFields(formData: FormData) {
     qualification_level: text(formData, "qualification_level"),
     leave_date: text(formData, "leave_date"),
     leave_reason: text(formData, "leave_reason"),
+    ni_number: ni && (normaliseNiNumber(ni) ?? ni),
+    emergency_contact_name: text(formData, "emergency_contact_name"),
+    emergency_contact_relationship: text(formData, "emergency_contact_relationship"),
+    emergency_contact_phone: text(formData, "emergency_contact_phone"),
   };
 }
 
 function checkEmployee(fields: ReturnType<typeof employeeFields>) {
   if (!fields.first_name || !fields.last_name) return { error: "First and last name are required." };
+  if (fields.ni_number && !normaliseNiNumber(fields.ni_number)) return { error: NI_NUMBER_ERROR };
   if (fields.leave_date && !fields.leave_reason) return { error: "Add a leave reason as well as the leave date." };
   if (fields.leave_date && fields.start_date && fields.leave_date < fields.start_date) {
     return { error: "The leave date is before the start date." };
@@ -239,4 +246,26 @@ export async function removeTask(employeeId: string, taskId: string) {
   const supabase = await createClient();
   await supabase.from("onboarding_tasks").delete().eq("id", taskId);
   revalidatePath(`/staff/${employeeId}`);
+}
+
+export async function uploadP45(employeeId: string, _: ActionState, formData: FormData): Promise<ActionState> {
+  const session = await requireSession("admin");
+  const stored = await storePdf("p45s", employeeId, formData.get("file") as File | null);
+  if ("error" in stored) return stored;
+
+  const supabase = await createClient();
+  const { data: previous } = await supabase.from("p45s").select("storage_path").eq("employee_id", employeeId).maybeSingle();
+  const { error } = await supabase
+    .from("p45s")
+    .upsert(
+      { employee_id: employeeId, storage_path: stored.path, uploaded_by: session.userId, uploaded_at: new Date().toISOString() },
+      { onConflict: "employee_id" },
+    );
+  if (error) {
+    await removeFile("p45s", stored.path);
+    return failed(error);
+  }
+  if (previous) await removeFile("p45s", previous.storage_path);
+  revalidatePath(`/staff/${employeeId}`);
+  return { message: "P45 saved." };
 }

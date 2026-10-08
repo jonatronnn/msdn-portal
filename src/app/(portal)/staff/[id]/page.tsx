@@ -4,7 +4,7 @@ import { Toggle } from "@/components/toggle";
 import { Badge, Card, DetailList, Empty, Field, Input, LinkButton, PageHeader, Table, Td } from "@/components/ui";
 import { requireSession } from "@/lib/auth";
 import { formatDate, formatLengthOfService, isCurrentEmployee, todayInLondon } from "@/lib/dates";
-import { formatAddress, fullName } from "@/lib/staff";
+import { formatAddress, formatNiNumber, fullName } from "@/lib/staff";
 import { MAX_FILE_MB } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -16,6 +16,7 @@ import {
   sendContract,
   setPolicyAcknowledged,
   setTaskDone,
+  uploadP45,
   uploadSignedContract,
   voidContract,
 } from "../actions";
@@ -29,8 +30,15 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
   const { data: e } = await supabase.from("employees").select("*").eq("id", id).maybeSingle();
   if (!e) notFound();
 
-  const [{ data: qualifications }, { data: contracts }, { data: policies }, { data: acks }, { data: tasks }, { data: payslips }] =
-    await Promise.all([
+  const [
+    { data: qualifications },
+    { data: contracts },
+    { data: policies },
+    { data: acks },
+    { data: tasks },
+    { data: payslips },
+    { data: p45 },
+  ] = await Promise.all([
       supabase.from("employee_qualifications").select("*").eq("employee_id", id).order("achieved_on"),
       supabase.from("contracts").select("*").eq("employee_id", id).order("created_at", { ascending: false }),
       supabase.from("policies").select("id, title").eq("archived", false).eq("requires_acknowledgement", true).order("title"),
@@ -38,6 +46,9 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
       supabase.from("onboarding_tasks").select("*").eq("employee_id", id).order("sort_order").order("title"),
       session.role === "admin"
         ? supabase.from("payslips").select("id, pay_date, file_name").eq("employee_id", id).order("pay_date", { ascending: false })
+        : Promise.resolve({ data: null }),
+      session.role === "admin"
+        ? supabase.from("p45s").select("id, uploaded_at").eq("employee_id", id).maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
 
@@ -69,6 +80,17 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
             ["Mobile", e.mobile_phone],
             ["Home phone", e.home_phone],
             ["Home address", formatAddress(e)],
+            ["National Insurance number", formatNiNumber(e.ni_number)],
+          ]}
+        />
+      </Card>
+
+      <Card title="Emergency contact">
+        <DetailList
+          items={[
+            ["Name", e.emergency_contact_name],
+            ["Relationship", e.emergency_contact_relationship],
+            ["Phone", e.emergency_contact_phone],
           ]}
         />
       </Card>
@@ -240,6 +262,28 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
           </div>
         </ActionForm>
       </Card>
+
+      {session.role === "admin" && (
+        <Card title="P45">
+          {p45 ? (
+            <p className="mb-4 text-sm">
+              <a href={`/files/p45s/${p45.id}`} target="_blank" className="text-teal-800 hover:underline">
+                View P45
+              </a>{" "}
+              <span className="text-stone-500">· uploaded {formatDate(p45.uploaded_at)}</span>
+            </p>
+          ) : (
+            <div className="mb-4">
+              <Empty>No P45 uploaded.</Empty>
+            </div>
+          )}
+          <ActionForm action={uploadP45.bind(null, id)} submitLabel={p45 ? "Replace P45" : "Upload P45"} variant="secondary" className="flex flex-wrap items-end gap-3">
+            <Field label="P45 PDF" hint={`Up to ${MAX_FILE_MB}MB.`}>
+              <Input name="file" type="file" accept="application/pdf" required />
+            </Field>
+          </ActionForm>
+        </Card>
+      )}
 
       {payslips && (
         <Card title="Payslips">
