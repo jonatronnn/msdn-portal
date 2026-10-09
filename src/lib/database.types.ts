@@ -23,7 +23,61 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "contracts": {
+            "child_checklist_tasks": {
+                  Row: {
+                    "child_id": string,"completed_at": string | null,"completed_by": string | null,"completed_by_name": string | null,"id": string,"notes": string | null,"sort_order": number,"title": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "child_id": string,"completed_at"?: string | null,"completed_by"?: string | null,"completed_by_name"?: string | null,"id"?: string,"notes"?: string | null,"sort_order"?: number,"title": string
+                  }
+                  Update: {
+                    "child_id"?: string,"completed_at"?: string | null,"completed_by"?: string | null,"completed_by_name"?: string | null,"id"?: string,"notes"?: string | null,"sort_order"?: number,"title"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "child_checklist_tasks_child_id_fkey"
+      columns: ["child_id"]
+isOneToOne: false
+      referencedRelation: "children"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "child_checklist_tasks_completed_by_fkey"
+      columns: ["completed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"child_checklist_templates": {
+                  Row: {
+                    "active": boolean,"id": string,"sort_order": number,"title": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"id"?: string,"sort_order"?: number,"title": string
+                  }
+                  Update: {
+                    "active"?: boolean,"id"?: string,"sort_order"?: number,"title"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"children": {
+                  Row: {
+                    "created_at": string,"first_name": string,"id": string,"last_name": string,"provisional_start_date": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"first_name": string,"id"?: string,"last_name": string,"provisional_start_date"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"first_name"?: string,"id"?: string,"last_name"?: string,"provisional_start_date"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"contracts": {
                   Row: {
                     "created_at": string,"employee_id": string,"id": string,"sent_at": string | null,"sent_by": string | null,"sha256": string,"signed_at": string | null,"signed_ip": string | null,"signed_name": string | null,"signed_user_agent": string | null,"status": Database["public"]['Enums']["contract_status"],"storage_path": string,"title": string,"uploaded_signed": boolean
                   }
