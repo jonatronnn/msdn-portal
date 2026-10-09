@@ -16,6 +16,8 @@ Tailwind CSS. Designed to be hosted on Vercel, with Supabase's London region.
 | P45s | All (upload & view) | Own only | Own only |
 | Policies & handbook | Publish & archive | Read, see who's acknowledged | Read & acknowledge |
 | Onboarding checklist template | Edit | View | — |
+| New children (starter checklists) | ✔ | ✔ | — |
+| Children's checklist template | Edit | View | — |
 | Users (invite, roles, deactivate, reset 2FA) | ✔ | — | — |
 | Notification settings | ✔ | — | — |
 
@@ -46,6 +48,16 @@ after the database confirms the person may see them.
 - **Email notifications** – birthday and work-anniversary emails on the day, and
   a weekly email of the coming week's birthdays, anniversaries, starters and
   leavers, to the addresses set under Admin → Notifications.
+
+## What's in the Children module
+
+- **New children** – add each new child (name and provisional start date) and
+  they get the standard starter checklist, based on the Early Years enrolment
+  checklist (tour booked, registration form, deposit, contract, key person,
+  settling-in and so on). Managers tick steps off; each tick records who did it
+  and when, and every step has a notes box. The list shows how far each child
+  has got and the next step due. Admins edit the standard steps. Famly still
+  holds the child's full registration details.
 
 ## Running it locally
 

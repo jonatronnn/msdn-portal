@@ -62,6 +62,11 @@ insert into p45s (employee_id, storage_path) values ('10000000-0000-0000-0000-00
 insert into onboarding_tasks (employee_id, title) values
   ('10000000-0000-0000-0000-000000000001', 'DBS check');
 
+insert into children (id, first_name, last_name) values
+  ('40000000-0000-0000-0000-000000000001', 'Rosie', 'Child');
+insert into child_checklist_tasks (child_id, title) values
+  ('40000000-0000-0000-0000-000000000001', 'Tour of the setting booked');
+
 -- New auth users get an inactive staff profile --------------------------------
 select pg_temp.expect((select role::text || '/' || active::text from profiles where email = 'self-signup@example.com'),
   'staff/false', 'new auth users start as inactive staff');
@@ -73,6 +78,7 @@ select pg_temp.expect((select count(*) from employees), 2::bigint, 'admin sees a
 select pg_temp.expect((select count(*) from payslips), 2::bigint, 'admin sees all payslips');
 select pg_temp.expect((select count(*) from p45s), 1::bigint, 'admin sees P45s');
 select pg_temp.expect((select count(*) from policies), 2::bigint, 'admin sees archived policies too');
+insert into child_checklist_templates (title) values ('Admin step');
 update notification_settings set weekly_digest_day = 3;
 select pg_temp.expect((select weekly_digest_day from notification_settings), 3, 'admin edits notification settings');
 select pg_temp.sign_out();
@@ -81,6 +87,7 @@ select pg_temp.sign_out();
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a', 'aal1');
 select pg_temp.expect((select count(*) from profiles), 1::bigint, 'aal1 admin sees only own profile');
 select pg_temp.expect((select count(*) from employees), 0::bigint, 'aal1 admin sees no employees');
+select pg_temp.expect((select count(*) from children), 0::bigint, 'aal1 admin sees no children');
 select pg_temp.expect((select count(*) from payslips), 0::bigint, 'aal1 admin sees no payslips');
 select pg_temp.sign_out();
 
@@ -89,6 +96,15 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b', 'aal2');
 select pg_temp.expect((select count(*) from employees), 2::bigint, 'manager sees all employees');
 select pg_temp.expect((select count(*) from contracts), 2::bigint, 'manager sees all contracts');
 select pg_temp.expect((select count(*) from onboarding_tasks), 1::bigint, 'manager sees onboarding tasks');
+select pg_temp.expect((select count(*) from children), 1::bigint, 'manager sees children');
+update child_checklist_tasks set completed_at = now(), notes = 'Booked for Tuesday';
+select pg_temp.expect((select notes from child_checklist_tasks), 'Booked for Tuesday', 'manager ticks child checklist steps');
+select pg_temp.expect((select count(*) from child_checklist_templates), 18::bigint, 'manager reads child checklist template');
+do $$ begin
+  insert into child_checklist_templates (title) values ('x');
+  raise exception 'FAIL: manager edited the child checklist template';
+exception when insufficient_privilege then null;
+end $$;
 select pg_temp.expect((select count(*) from payslips), 0::bigint, 'manager cannot see payslips');
 select pg_temp.expect((select count(*) from p45s), 0::bigint, 'manager cannot see P45s');
 select pg_temp.expect((select count(*) from profiles), 1::bigint, 'manager sees only own profile');
@@ -111,6 +127,9 @@ select pg_temp.expect((select count(*) from payslips), 1::bigint, 'staff sees on
 select pg_temp.expect((select count(*) from p45s), 0::bigint, 'staff cannot see another employee''s P45');
 select pg_temp.expect((select count(*) from policies), 1::bigint, 'staff sees live policies only');
 select pg_temp.expect((select count(*) from onboarding_tasks), 0::bigint, 'staff cannot see onboarding tasks');
+select pg_temp.expect((select count(*) from children), 0::bigint, 'staff cannot see children');
+select pg_temp.expect((select count(*) from child_checklist_tasks), 0::bigint, 'staff cannot see child checklists');
+select pg_temp.expect((select count(*) from child_checklist_templates), 0::bigint, 'staff cannot see child checklist template');
 
 update employees set job_title = 'Manager', payroll_id = 'HACK';
 select pg_temp.expect((select payroll_id from employees), 'P1', 'staff cannot edit their record directly');
@@ -179,6 +198,7 @@ select pg_temp.sign_out();
 -- Signed-out (anon) sees nothing ---------------------------------------------
 set role anon;
 select pg_temp.expect((select count(*) from employees), 0::bigint, 'anon sees no employees');
+select pg_temp.expect((select count(*) from children), 0::bigint, 'anon sees no children');
 select pg_temp.expect((select count(*) from policies), 0::bigint, 'anon sees no policies');
 do $$ begin
   perform sign_contract('20000000-0000-0000-0000-000000000002', 'x', null, null);
