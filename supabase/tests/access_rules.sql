@@ -197,9 +197,21 @@ select pg_temp.sign_out();
 
 -- Signed-out (anon) sees nothing ---------------------------------------------
 set role anon;
-select pg_temp.expect((select count(*) from employees), 0::bigint, 'anon sees no employees');
-select pg_temp.expect((select count(*) from children), 0::bigint, 'anon sees no children');
-select pg_temp.expect((select count(*) from policies), 0::bigint, 'anon sees no policies');
+do $$ begin
+  perform count(*) from employees;
+  raise exception 'FAIL: anon read employees';
+exception when insufficient_privilege then null;
+end $$;
+do $$ begin
+  perform count(*) from children;
+  raise exception 'FAIL: anon read children';
+exception when insufficient_privilege then null;
+end $$;
+do $$ begin
+  perform count(*) from policies;
+  raise exception 'FAIL: anon read policies';
+exception when insufficient_privilege then null;
+end $$;
 do $$ begin
   perform sign_contract('20000000-0000-0000-0000-000000000002', 'x', null, null);
   raise exception 'FAIL: anon called sign_contract';
