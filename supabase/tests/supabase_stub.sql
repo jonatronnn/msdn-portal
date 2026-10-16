@@ -18,5 +18,4 @@ create schema storage;
 create table storage.buckets (id text primary key, name text, public boolean);
 
 grant usage on schema public to anon, authenticated, service_role;
-alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
