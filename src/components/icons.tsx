@@ -32,11 +32,15 @@ export function Icon({ name, ...props }: { name: IconName } & SVGProps<SVGSVGEle
   );
 }
 
-export function Logo({ className = "h-9 w-9" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 40 40" aria-hidden="true" className={className}>
-      <rect width="40" height="40" rx="11" fill="#fbbf24" />
-      <path d="m20 8.5 3.4 7 7.6 1.1-5.5 5.4 1.3 7.6L20 26l-6.8 3.6 1.3-7.6L9 16.6l7.6-1.1z" fill="#134e4a" />
-    </svg>
-  );
+// The nursery's logo, from its Illustrator artwork: tiles beside the name
+// (horizontal) or above it (stacked).
+const logos = {
+  horizontal: { src: "/logo-horizontal.svg", width: 400, height: 115 },
+  stacked: { src: "/logo-stacked.svg", width: 265, height: 177 },
+};
+
+export function Logo({ variant = "horizontal", className = "h-auto w-52" }: { variant?: keyof typeof logos; className?: string }) {
+  const { src, width, height } = logos[variant];
+  // eslint-disable-next-line @next/next/no-img-element -- static SVG
+  return <img src={src} alt="Montagu Square Day Nursery" width={width} height={height} className={className} />;
 }

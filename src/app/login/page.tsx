@@ -25,7 +25,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
               <Input name="password" type="password" autoComplete="current-password" required />
             </Field>
           </ActionForm>
-          <a href="/login?reset" className="mt-4 block text-sm text-teal-700 hover:underline">
+          <a href="/login?reset" className="mt-4 block text-sm text-brand-700 hover:underline">
             Forgotten your password?
           </a>
         </>
@@ -36,7 +36,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
               <Input name="email" type="email" autoComplete="email" required />
             </Field>
           </ActionForm>
-          <a href="/login" className="mt-4 block text-sm text-teal-700 hover:underline">
+          <a href="/login" className="mt-4 block text-sm text-brand-700 hover:underline">
             Back to sign in
           </a>
         </>

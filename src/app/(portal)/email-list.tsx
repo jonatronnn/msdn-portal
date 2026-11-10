@@ -27,7 +27,7 @@ export function EmailList({ staff }: { staff: { id: string; name: string; email:
       <label className="flex items-center gap-2 text-sm font-medium">
         <input
           type="checkbox"
-          className="h-4 w-4 accent-teal-700"
+          className="h-4 w-4 accent-brand-700"
           checked={allSelected}
           onChange={() => {
             setSelected(allSelected ? new Set() : new Set(staff.map((s) => s.id)));
@@ -39,7 +39,7 @@ export function EmailList({ staff }: { staff: { id: string; name: string; email:
       <div className="grid gap-1 sm:grid-cols-2">
         {staff.map((s) => (
           <label key={s.id} className="flex items-center gap-2 text-sm">
-            <input type="checkbox" className="h-4 w-4 accent-teal-700" checked={selected.has(s.id)} onChange={() => toggle(s.id)} />
+            <input type="checkbox" className="h-4 w-4 accent-brand-700" checked={selected.has(s.id)} onChange={() => toggle(s.id)} />
             {s.name}
           </label>
         ))}

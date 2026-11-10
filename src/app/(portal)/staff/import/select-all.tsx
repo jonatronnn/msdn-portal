@@ -6,7 +6,7 @@ export function SelectAll({ name }: { name: string }) {
     <label className="flex items-center gap-2 text-sm font-medium">
       <input
         type="checkbox"
-        className="h-4 w-4 accent-teal-700"
+        className="h-4 w-4 accent-brand-700"
         onChange={(e) =>
           e.currentTarget.form
             ?.querySelectorAll<HTMLInputElement>(`input[name="${name}"]:not(:disabled)`)

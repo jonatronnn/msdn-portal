@@ -1,11 +1,37 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-lato);
+  --font-display: var(--font-julius);
   --font-mono: var(--font-geist-mono);
 }
 
+/* Montagu Square brand colours, taken from the nursery's logo. */
+@theme {
+  /* Slate blue of the "Montagu Square" lettering (#4A6F9C). */
+  --color-brand-50: #f2f5f9;
+  --color-brand-100: #e3eaf2;
+  --color-brand-200: #c6d4e5;
+  --color-brand-300: #9db4d0;
+  --color-brand-400: #7192b7;
+  --color-brand-500: #5a7fab;
+  --color-brand-600: #4a6f9c;
+  --color-brand-700: #3d5c83;
+  --color-brand-800: #324b6b;
+  --color-brand-900: #283c56;
+
+  /* The four logo tiles, with a deeper shade of each for icons and text. */
+  --color-tile-pink: #f6a4a6;
+  --color-tile-pink-ink: #b8545a;
+  --color-tile-mint: #b7e0d2;
+  --color-tile-mint-ink: #2f7d6e;
+  --color-tile-peach: #fed59e;
+  --color-tile-peach-ink: #a8651a;
+  --color-tile-lilac: #e0c7e0;
+  --color-tile-lilac-ink: #7f5486;
+}
+
 body {
-  background: #f6f5f1;
-  color: #1c1917;
+  background: #faf8f4;
+  color: #2b3240;
 }

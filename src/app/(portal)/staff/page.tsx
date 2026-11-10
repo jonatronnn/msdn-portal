@@ -38,7 +38,7 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
                 key={label as string}
                 href={href as string}
                 aria-current={active as boolean}
-                className={`rounded-md px-3 py-1.5 font-medium transition ${active ? "bg-white text-teal-800 shadow-sm" : "text-stone-500 hover:text-stone-800"}`}
+                className={`rounded-md px-3 py-1.5 font-medium transition ${active ? "bg-white text-brand-800 shadow-sm" : "text-stone-500 hover:text-stone-800"}`}
               >
                 {label}
               </Link>
@@ -53,7 +53,7 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
             {employees.map((e) => (
               <tr key={e.id}>
                 <Td>
-                  <Link href={`/staff/${e.id}`} className="font-medium text-teal-800 hover:underline">
+                  <Link href={`/staff/${e.id}`} className="font-medium text-brand-800 hover:underline">
                     {fullName(e)}
                   </Link>
                 </Td>
@@ -72,7 +72,7 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
               return (
                 <tr key={e.id}>
                   <Td>
-                    <Link href={`/staff/${e.id}`} className="font-medium text-teal-800 hover:underline">
+                    <Link href={`/staff/${e.id}`} className="font-medium text-brand-800 hover:underline">
                       {fullName(e)}
                     </Link>
                   </Td>

@@ -9,7 +9,7 @@ export default async function StarterFormPage({ params }: PageProps<"/starter/[t
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
-      <p className="text-sm font-medium text-teal-700">Montagu Square Day Nursery</p>
+      <p className="text-sm font-medium text-brand-700">Montagu Square Day Nursery</p>
       <h1 className="mb-6 text-2xl font-semibold">Important information</h1>
       {!link?.employees ? (
         <p className="rounded-lg border border-stone-200 bg-white p-6 text-sm shadow-sm">

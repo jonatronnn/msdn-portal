@@ -197,7 +197,7 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
               !bankError && <p className="mb-4 text-sm text-stone-600">Not provided yet.</p>
             )}
             <details>
-              <summary className="cursor-pointer text-sm text-teal-700">{bankDetails ? "Change bank details" : "Enter bank details"}</summary>
+              <summary className="cursor-pointer text-sm text-brand-700">{bankDetails ? "Change bank details" : "Enter bank details"}</summary>
               <ActionForm action={saveBankDetails.bind(null, id)} submitLabel="Save bank details" className="mt-4 grid gap-4 sm:grid-cols-3">
                 <Field label="Name on account">
                   <Input name="account_name" required autoComplete="off" />
@@ -280,7 +280,7 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
             {contracts.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-4 py-2">
                 <span>
-                  <a href={`/files/contracts/${c.id}`} target="_blank" className="text-teal-800 hover:underline">
+                  <a href={`/files/contracts/${c.id}`} target="_blank" className="text-brand-800 hover:underline">
                     {c.title}
                   </a>{" "}
                   <span className="text-stone-500">
@@ -356,7 +356,7 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
               ]}
             />
             <form action={reinstateEmployee.bind(null, id)}>
-              <button className="text-sm text-teal-700 hover:underline">Undo: they&apos;re still employed</button>
+              <button className="text-sm text-brand-700 hover:underline">Undo: they&apos;re still employed</button>
             </form>
           </div>
         ) : (

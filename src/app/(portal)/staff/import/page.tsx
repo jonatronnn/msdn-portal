@@ -68,7 +68,7 @@ export default async function ImportFromFamlyPage() {
                       value={f.id}
                       disabled={!f.email}
                       aria-label={`Import ${f.first_name} ${f.last_name}`}
-                      className="h-4 w-4 accent-teal-700"
+                      className="h-4 w-4 accent-brand-700"
                     />
                   </Td>
                   <Td className="font-medium">
@@ -88,7 +88,7 @@ export default async function ImportFromFamlyPage() {
               ))}
             </Table>
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="new_starters" className="h-4 w-4 accent-teal-700" />
+              <input type="checkbox" name="new_starters" className="h-4 w-4 accent-brand-700" />
               They&apos;re new starters: give them the onboarding checklist
             </label>
           </ActionForm>

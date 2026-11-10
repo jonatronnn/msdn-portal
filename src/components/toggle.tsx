@@ -21,7 +21,7 @@ export function Toggle({
     <label className="flex items-start gap-2 text-sm">
       <input
         type="checkbox"
-        className="mt-0.5 h-4 w-4 accent-teal-700"
+        className="mt-0.5 h-4 w-4 accent-brand-700"
         checked={value}
         disabled={pending}
         onChange={(e) => {

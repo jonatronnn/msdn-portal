@@ -6,5 +6,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // Static files (logos, the tab icon) load without signing in.
+  matcher: ["/((?!_next/static|_next/image|.*\\.(?:svg|png|ico)$).*)"],
 };

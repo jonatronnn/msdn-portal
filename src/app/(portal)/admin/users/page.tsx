@@ -72,7 +72,7 @@ export default async function UsersPage() {
                   {!self && (
                     <div className="space-y-2">
                       <form action={setActive.bind(null, p.id, !p.active)}>
-                        <button className={`text-sm hover:underline ${p.active ? "text-red-700" : "text-teal-700"}`}>
+                        <button className={`text-sm hover:underline ${p.active ? "text-red-700" : "text-brand-700"}`}>
                           {p.active ? "Deactivate" : "Reactivate"}
                         </button>
                       </form>

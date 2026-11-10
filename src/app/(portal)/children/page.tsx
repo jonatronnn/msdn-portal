@@ -33,7 +33,7 @@ export default async function ChildrenPage() {
             {inProgress.map(({ id, progress, ...child }) => (
               <tr key={id}>
                 <Td>
-                  <Link href={`/children/${id}`} className="font-medium text-teal-800 hover:underline">
+                  <Link href={`/children/${id}`} className="font-medium text-brand-800 hover:underline">
                     {fullName(child)}
                   </Link>
                 </Td>
@@ -41,7 +41,7 @@ export default async function ChildrenPage() {
                 <Td>
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-24 overflow-hidden rounded bg-stone-200">
-                      <div className="h-full bg-teal-600" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
+                      <div className="h-full bg-brand-600" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
                     </div>
                     {progress.done}/{progress.total}
                   </div>
@@ -74,7 +74,7 @@ export default async function ChildrenPage() {
           <ul className="divide-y divide-stone-100 text-sm">
             {complete.map((c) => (
               <li key={c.id} className="flex items-center justify-between py-2">
-                <Link href={`/children/${c.id}`} className="text-teal-800 hover:underline">
+                <Link href={`/children/${c.id}`} className="text-brand-800 hover:underline">
                   {fullName(c)}
                 </Link>
                 <span className="flex items-center gap-2 text-stone-500">

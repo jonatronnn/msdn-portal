@@ -2,22 +2,22 @@ import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
 export const inputClass =
-  "block w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20 disabled:bg-stone-100";
+  "block w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20 disabled:bg-stone-100";
 
 const buttonVariants = {
-  primary: "bg-teal-700 text-white shadow-sm hover:bg-teal-800",
+  primary: "bg-brand-700 text-white shadow-sm hover:bg-brand-800",
   secondary: "bg-white text-stone-800 shadow-sm ring-1 ring-stone-300 hover:bg-stone-50",
   danger: "bg-white text-red-700 shadow-sm ring-1 ring-red-300 hover:bg-red-50",
 };
 
 export function buttonClass(variant: keyof typeof buttonVariants = "primary") {
-  return `inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40 disabled:opacity-50 ${buttonVariants[variant]}`;
+  return `inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/40 disabled:opacity-50 ${buttonVariants[variant]}`;
 }
 
 export function PageHeader({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
-      <h1 className="text-3xl font-semibold tracking-tight text-stone-900">{title}</h1>
+      <h1 className="font-display text-3xl text-brand-800">{title}</h1>
       {children && <div className="flex flex-wrap gap-2">{children}</div>}
     </div>
   );
@@ -28,7 +28,7 @@ export function Card({ title, children, actions }: { title?: string; children: R
     <section className="mb-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200/80">
       {(title || actions) && (
         <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-          {title && <h2 className="text-base font-semibold text-stone-900">{title}</h2>}
+          {title && <h2 className="text-base font-bold text-brand-800">{title}</h2>}
           {actions}
         </div>
       )}
@@ -110,7 +110,7 @@ export function Table({ head, children }: { head: string[]; children: ReactNode 
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-stone-100 [&>tr:hover]:bg-teal-50/40">{children}</tbody>
+        <tbody className="divide-y divide-stone-100 [&>tr:hover]:bg-brand-50/40">{children}</tbody>
       </table>
     </div>
   );

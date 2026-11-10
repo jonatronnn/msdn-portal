@@ -36,7 +36,7 @@ export default async function SettingsPage() {
                 <Td>{t.validity_months ? `${t.validity_months} months` : "Doesn't expire"}</Td>
                 <Td>
                   <form action={setTrainingTypeActive.bind(null, t.id, !t.active)}>
-                    <button className="text-xs text-stone-500 hover:text-teal-700 hover:underline">
+                    <button className="text-xs text-stone-500 hover:text-brand-700 hover:underline">
                       {t.active ? "Hide" : "Show again"}
                     </button>
                   </form>

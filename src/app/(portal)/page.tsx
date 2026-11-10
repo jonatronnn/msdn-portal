@@ -55,14 +55,14 @@ export default async function Dashboard() {
     <>
       <PageHeader title={`Hello${session.fullName ? `, ${session.fullName.split(" ")[0]}` : ""}`} />
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <Stat label="Current staff" value={current.length} href="/staff" icon="users" tone="teal" />
-        <Stat label="New starters being onboarded" value={onboarding} href="/onboarding" icon="clipboard" tone="sky" />
+        <Stat label="Current staff" value={current.length} href="/staff" icon="users" tone="mint" />
+        <Stat label="New starters being onboarded" value={onboarding} href="/onboarding" icon="clipboard" tone="lilac" />
         <Stat
           label="Training expired or expiring soon"
           value={expiring.length}
           href="#training"
           icon="alert"
-          tone={expiring.length ? "amber" : "teal"}
+          tone={expiring.length ? "pink" : "peach"}
         />
       </div>
 
@@ -72,7 +72,7 @@ export default async function Dashboard() {
             {anniversaries.map((a) => (
               <li key={a.id} className="flex flex-wrap items-center gap-3 py-2">
                 <span className="w-28 text-stone-500">{formatDate(a.date)}</span>
-                <Link href={`/staff/${a.id}`} className="font-medium text-teal-800 hover:underline">
+                <Link href={`/staff/${a.id}`} className="font-medium text-brand-800 hover:underline">
                   {a.name}
                 </Link>
                 <Badge tone="green">
@@ -93,7 +93,7 @@ export default async function Dashboard() {
             <ul className="divide-y divide-stone-100 text-sm">
               {expiring.map((t) => (
                 <li key={t.id} className="flex flex-wrap items-center gap-3 py-2">
-                  <Link href={`/staff/${t.employee_id}`} className="font-medium text-teal-800 hover:underline">
+                  <Link href={`/staff/${t.employee_id}`} className="font-medium text-brand-800 hover:underline">
                     {names.get(t.employee_id)}
                   </Link>
                   <span>{t.training_types?.name}</span>
@@ -120,10 +120,12 @@ export default async function Dashboard() {
   );
 }
 
+// The logo's tile colours.
 const statTones = {
-  teal: "bg-teal-50 text-teal-700",
-  sky: "bg-sky-50 text-sky-700",
-  amber: "bg-amber-50 text-amber-700",
+  mint: "bg-tile-mint/45 text-tile-mint-ink",
+  lilac: "bg-tile-lilac/50 text-tile-lilac-ink",
+  peach: "bg-tile-peach/50 text-tile-peach-ink",
+  pink: "bg-tile-pink/40 text-tile-pink-ink",
 };
 
 function Stat({
@@ -148,7 +150,7 @@ function Stat({
         <Icon name={icon} className="h-6 w-6" />
       </span>
       <span>
-        <span className="block text-3xl font-semibold tracking-tight text-stone-900">{value}</span>
+        <span className="block text-3xl font-bold tracking-tight text-brand-800">{value}</span>
         <span className="block text-sm text-stone-600">{label}</span>
       </span>
     </Link>

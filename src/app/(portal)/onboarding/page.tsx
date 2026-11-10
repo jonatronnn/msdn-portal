@@ -42,7 +42,7 @@ export default async function OnboardingPage() {
             {inProgress.map(([id, { employee, done, total }]) => (
               <tr key={id}>
                 <Td>
-                  <Link href={`/staff/${id}`} className="font-medium text-teal-800 hover:underline">
+                  <Link href={`/staff/${id}`} className="font-medium text-brand-800 hover:underline">
                     {fullName(employee)}
                   </Link>
                 </Td>
@@ -51,7 +51,7 @@ export default async function OnboardingPage() {
                 <Td>
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-24 overflow-hidden rounded bg-stone-200">
-                      <div className="h-full bg-teal-600" style={{ width: `${(done / total) * 100}%` }} />
+                      <div className="h-full bg-brand-600" style={{ width: `${(done / total) * 100}%` }} />
                     </div>
                     {done}/{total}
                   </div>
