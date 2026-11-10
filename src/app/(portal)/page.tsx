@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/auth";
 import { addDays, formatDate, formatTimeUntil, isCurrentEmployee, nextMilestone, todayInLondon } from "@/lib/dates";
 import { fullName } from "@/lib/staff";
 import { createClient } from "@/lib/supabase/server";
+import { EmailList } from "./email-list";
 
 // How far ahead the dashboard looks for anniversaries and expiring training.
 const LOOKAHEAD_DAYS = 60;
@@ -15,7 +16,7 @@ export default async function Dashboard() {
   const horizon = addDays(today, LOOKAHEAD_DAYS);
 
   const [{ data: employees }, { data: openTasks }, { data: training }] = await Promise.all([
-    supabase.from("employees").select("id, first_name, last_name, start_date, leave_date"),
+    supabase.from("employees").select("id, first_name, last_name, email, start_date, leave_date").order("last_name").order("first_name"),
     supabase.from("onboarding_tasks").select("employee_id").is("completed_at", null),
     supabase
       .from("employee_training")
@@ -104,6 +105,10 @@ export default async function Dashboard() {
           )}
         </Card>
       </section>
+
+      <Card title="Email list">
+        <EmailList staff={current.map((e) => ({ id: e.id, name: fullName(e), email: e.email }))} />
+      </Card>
     </>
   );
 }

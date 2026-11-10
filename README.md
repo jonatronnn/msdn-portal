@@ -52,7 +52,8 @@ storage and are only handed out as one-minute links.
   contract uploaded, and payroll reference added. If email isn't set up, the
   manager is shown the link to send another way.
 - **Dashboard** – major anniversaries and training to renew in the next 60
-  days, and who is being onboarded.
+  days, who is being onboarded, and an **email list**: tick current staff (or
+  select all) to get their addresses ready to paste into an email.
 
 ## What's in the Children module
 
