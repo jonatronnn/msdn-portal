@@ -26,7 +26,7 @@ export function ActionForm({
 
   // Clear the form only after a successful save.
   useEffect(() => {
-    if (state?.message) formRef.current?.reset();
+    if (state?.message && !state.link) formRef.current?.reset();
   }, [state]);
 
   return (
@@ -54,6 +54,15 @@ export function ActionForm({
         )}
         {state?.message && <p className="text-sm text-green-700">{state.message}</p>}
       </div>
+      {state?.link && (
+        <input
+          readOnly
+          value={state.link}
+          aria-label="Link"
+          onFocus={(e) => e.currentTarget.select()}
+          className="mt-2 block w-full rounded-md border border-stone-300 bg-stone-50 px-3 py-2 font-mono text-xs"
+        />
+      )}
     </form>
   );
 }

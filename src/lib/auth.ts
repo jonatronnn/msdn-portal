@@ -3,14 +3,14 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export type Role = "admin" | "manager" | "staff";
+// "admin" is the owner role (shown as "Owner"). Staff don't have logins.
+export type Role = "admin" | "manager";
 
 export type Session = {
   userId: string;
   email: string;
   role: Role;
   fullName: string;
-  employeeId: string | null;
 };
 
 type SessionState =
@@ -30,19 +30,11 @@ const loadSession = cache(async (): Promise<SessionState> => {
     .select("role, full_name, active")
     .eq("id", claims.sub)
     .maybeSingle();
-  if (!profile?.active) return { status: "inactive" };
+  if (!profile?.active || profile.role === "staff") return { status: "inactive" };
 
-  // Admins and managers must use two-step sign-in (the database also refuses
-  // them elevated access without it).
-  if (claims.aal !== "aal2" && (profile.role === "admin" || profile.role === "manager")) {
-    return { status: "needs-mfa" };
-  }
-
-  const { data: employee } = await supabase
-    .from("employees")
-    .select("id")
-    .eq("profile_id", claims.sub)
-    .maybeSingle();
+  // Everyone must use two-step sign-in (the database also refuses access
+  // without it).
+  if (claims.aal !== "aal2") return { status: "needs-mfa" };
 
   return {
     status: "ok",
@@ -51,7 +43,6 @@ const loadSession = cache(async (): Promise<SessionState> => {
       email: (claims.email as string | undefined) ?? "",
       role: profile.role,
       fullName: profile.full_name,
-      employeeId: employee?.id ?? null,
     },
   };
 });
@@ -66,6 +57,11 @@ export async function requireSession(...roles: Role[]): Promise<Session> {
   return state.session;
 }
 
-export function isManager(session: Session) {
-  return session.role === "admin" || session.role === "manager";
+export function isOwner(session: Session) {
+  return session.role === "admin";
+}
+
+// The name recorded against checklist ticks and uploads.
+export function actorName(session: Session) {
+  return session.fullName || session.email;
 }

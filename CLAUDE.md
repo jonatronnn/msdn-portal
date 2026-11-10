@@ -73,7 +73,9 @@ Next.js 16 differs from older versions: read `node_modules/next/dist/docs/` befo
 
 - Check: `npm run lint && npm run typecheck && npm test && npm run test:db`
 - Database changes: new file in `supabase/migrations/`, access-rule tests in `supabase/tests/access_rules.sql`, then `npm run db:types`.
-- Security model: access rules live in the database (RLS). Server code uses the user's client (`src/lib/supabase/server.ts`); the service-role client (`admin.ts`) is only for invites, storage and the cron job, after `requireSession(...)` has checked the role.
+- Security model: access rules live in the database (RLS). Server code uses the user's client (`src/lib/supabase/server.ts`); the service-role client (`admin.ts`) is only for invites, storage and the public starter form (`src/app/starter/`, where the one-off token is the check), after `requireSession(...)` has checked the role.
+- Only owners (role `admin`) and managers log in. Bank details are owner-only and encrypted with `src/lib/crypto.ts` before storing.
+- Onboarding steps with an `automation` tick themselves via `completeAutomation()` in `src/lib/onboarding.ts`.
 - Every page and server action starts with `requireSession(...)` from `src/lib/auth.ts`.
 - New modules: register nav links in `src/modules/registry.ts`.
 - Dates are `YYYY-MM-DD` strings; use `src/lib/dates.ts` (UK time via `todayInLondon()`).

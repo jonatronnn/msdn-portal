@@ -6,22 +6,19 @@ import type { Role } from "@/lib/auth";
 export type NavItem = { href: string; label: string; roles: Role[] };
 export type Module = { name: string; items: NavItem[] };
 
-const everyone: Role[] = ["admin", "manager", "staff"];
 const managers: Role[] = ["admin", "manager"];
+const owner: Role[] = ["admin"];
 
 export const modules: Module[] = [
   {
     name: "Overview",
-    items: [{ href: "/", label: "Dashboard", roles: everyone }],
+    items: [{ href: "/", label: "Dashboard", roles: managers }],
   },
   {
     name: "Staff",
     items: [
       { href: "/staff", label: "Staff directory", roles: managers },
       { href: "/onboarding", label: "Onboarding", roles: managers },
-      { href: "/me", label: "My details", roles: everyone },
-      { href: "/handbook", label: "Policies & handbook", roles: everyone },
-      { href: "/payslips", label: "Payslips", roles: everyone },
     ],
   },
   {
@@ -31,8 +28,8 @@ export const modules: Module[] = [
   {
     name: "Admin",
     items: [
-      { href: "/admin/users", label: "Users", roles: ["admin"] },
-      { href: "/admin/settings", label: "Notifications", roles: ["admin"] },
+      { href: "/admin/users", label: "Users", roles: owner },
+      { href: "/admin/settings", label: "Training & checklist", roles: owner },
     ],
   },
 ];

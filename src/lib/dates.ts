@@ -28,10 +28,6 @@ export function formatDate(iso: string | null | undefined) {
   );
 }
 
-export function weekdayName(day: number) {
-  return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day];
-}
-
 // Whole years and months from start to end (end defaults to today).
 export function lengthOfService(start: string, end: string) {
   const [sy, sm, sd] = start.split("-").map(Number);
@@ -57,24 +53,7 @@ export function isCurrentEmployee(e: { leave_date: string | null }, today: strin
   return !e.leave_date || e.leave_date >= today;
 }
 
-export type EventEmployee = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  date_of_birth: string | null;
-  start_date: string | null;
-  leave_date: string | null;
-};
-
-export type StaffEvent = {
-  date: string;
-  type: "birthday" | "anniversary" | "start" | "leave";
-  employeeId: string;
-  name: string;
-  label: string;
-};
-
-// The date a yearly event (birthday, work anniversary) falls on in `year`.
+// The date a yearly event (such as a work anniversary) falls on in `year`.
 // 29 February is marked on 28 February in non-leap years.
 function occurrence(iso: string, year: number) {
   const [, m, d] = iso.split("-").map(Number);
@@ -83,43 +62,37 @@ function occurrence(iso: string, year: number) {
   return `${year}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-// Staff events from `from` for `days` days (inclusive of `from`).
-export function upcomingEvents(employees: EventEmployee[], from: string, days: number): StaffEvent[] {
-  const to = addDays(from, days - 1);
-  const inRange = (d: string) => d >= from && d <= to;
-  const years = [...new Set([Number(from.slice(0, 4)), Number(to.slice(0, 4))])];
-  const events: StaffEvent[] = [];
+export function addMonths(iso: string, months: number) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const total = y * 12 + (m - 1) + months;
+  const year = Math.floor(total / 12);
+  const month = (total % 12) + 1;
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return `${year}-${String(month).padStart(2, "0")}-${String(Math.min(d, lastDay)).padStart(2, "0")}`;
+}
 
-  for (const e of employees) {
-    const name = `${e.first_name} ${e.last_name}`;
-    const employedOn = (d: string) => (!e.leave_date || e.leave_date >= d) && (!e.start_date || e.start_date <= d);
+export function daysBetween(from: string, to: string) {
+  return Math.round((toUtc(to) - toUtc(from)) / DAY_MS);
+}
 
-    for (const year of years) {
-      if (e.date_of_birth) {
-        const d = occurrence(e.date_of_birth, year);
-        if (inRange(d) && employedOn(d)) events.push({ date: d, type: "birthday", employeeId: e.id, name, label: "Birthday" });
-      }
-      if (e.start_date) {
-        const d = occurrence(e.start_date, year);
-        const serviceYears = year - Number(e.start_date.slice(0, 4));
-        if (serviceYears > 0 && inRange(d) && employedOn(d)) {
-          events.push({
-            date: d,
-            type: "anniversary",
-            employeeId: e.id,
-            name,
-            label: `${serviceYears} year${serviceYears === 1 ? "" : "s"} at the nursery`,
-          });
-        }
-      }
-    }
-    if (e.start_date && inRange(e.start_date)) {
-      events.push({ date: e.start_date, type: "start", employeeId: e.id, name, label: "First day" });
-    }
-    if (e.leave_date && inRange(e.leave_date)) {
-      events.push({ date: e.leave_date, type: "leave", employeeId: e.id, name, label: "Last day" });
-    }
+export const MILESTONE_YEARS = [1, 5, 10, 15, 20];
+
+// The next major work anniversary on or after today, or null once the last
+// one has passed.
+export function nextMilestone(start: string, today: string) {
+  const startYear = Number(start.slice(0, 4));
+  for (const years of MILESTONE_YEARS) {
+    const date = occurrence(start, startYear + years);
+    if (date >= today) return { years, date };
   }
+  return null;
+}
 
-  return events.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
+// "today", "in 12 days", "in 3 mths", "in 1 yr 2 mths"
+export function formatTimeUntil(today: string, date: string) {
+  const days = daysBetween(today, date);
+  if (days === 0) return "today";
+  const span = lengthOfService(today, date)!;
+  if (span.years === 0 && span.months === 0) return `in ${days} day${days === 1 ? "" : "s"}`;
+  return `in ${formatLengthOfService(today, date, date)}`;
 }

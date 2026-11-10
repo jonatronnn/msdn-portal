@@ -1,46 +1,86 @@
 import { ActionForm } from "@/components/action-form";
-import { Card, Field, PageHeader, Select, Textarea } from "@/components/ui";
+import { Badge, Card, Field, Input, PageHeader, Table, Td } from "@/components/ui";
 import { requireSession } from "@/lib/auth";
-import { weekdayName } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
-import { saveSettings } from "./actions";
+import { addChecklistStep, addTrainingType, removeChecklistStep, setTrainingTypeActive } from "./actions";
+
+const automationNames: Record<string, string> = {
+  form_sent: "when the form is sent",
+  form_returned: "when the starter returns the form",
+  employment_details: "when all employment details are filled in",
+  contract_uploaded: "when a signed contract is uploaded",
+  payroll_ref: "when a payroll reference is added",
+};
 
 export default async function SettingsPage() {
   await requireSession("admin");
   const supabase = await createClient();
-  const { data: s } = await supabase.from("notification_settings").select("*").eq("id", 1).single();
-  if (!s) return null;
-
-  const checkbox = (name: string, checked: boolean, label: string) => (
-    <label className="flex items-center gap-2 text-sm">
-      <input type="checkbox" name={name} defaultChecked={checked} className="h-4 w-4 accent-teal-700" />
-      {label}
-    </label>
-  );
+  const [{ data: types }, { data: steps }] = await Promise.all([
+    supabase.from("training_types").select("*").order("active", { ascending: false }).order("name"),
+    supabase.from("onboarding_task_templates").select("*").eq("active", true).order("sort_order"),
+  ]);
 
   return (
     <>
-      <PageHeader title="Email notifications" />
-      <Card>
-        <ActionForm action={saveSettings} submitLabel="Save settings">
-          <Field label="Send notifications to" hint="One or more email addresses, separated by commas or new lines.">
-            <Textarea name="recipients" defaultValue={s.recipients.join("\n")} />
+      <PageHeader title="Training & checklist" />
+
+      <Card title="Training types">
+        <p className="mb-4 text-sm text-stone-600">
+          The length is used to work out the expiry date when a manager records training without one.
+        </p>
+        <div className="mb-6">
+          <Table head={["Training", "Lasts", ""]}>
+            {(types ?? []).map((t) => (
+              <tr key={t.id} className={t.active ? "" : "text-stone-400"}>
+                <Td>{t.name}</Td>
+                <Td>{t.validity_months ? `${t.validity_months} months` : "Doesn't expire"}</Td>
+                <Td>
+                  <form action={setTrainingTypeActive.bind(null, t.id, !t.active)}>
+                    <button className="text-xs text-stone-500 hover:text-teal-700 hover:underline">
+                      {t.active ? "Hide" : "Show again"}
+                    </button>
+                  </form>
+                </Td>
+              </tr>
+            ))}
+          </Table>
+        </div>
+        <ActionForm action={addTrainingType} submitLabel="Add training type" variant="secondary" className="grid gap-3 sm:grid-cols-[1fr_10rem_auto] sm:items-end">
+          <Field label="Training">
+            <Input name="name" required />
           </Field>
-          <div className="space-y-2">
-            {checkbox("birthdays_enabled", s.birthdays_enabled, "Email on the morning of a staff member's birthday")}
-            {checkbox("anniversaries_enabled", s.anniversaries_enabled, "Email on the morning of a work anniversary")}
-            {checkbox("weekly_digest_enabled", s.weekly_digest_enabled, "Weekly email of the week's birthdays, anniversaries, starters and leavers")}
+          <Field label="Lasts (months)" hint="Blank if it doesn't expire.">
+            <Input name="validity_months" inputMode="numeric" />
+          </Field>
+        </ActionForm>
+      </Card>
+
+      <Card title="New starter checklist">
+        <p className="mb-4 text-sm text-stone-600">
+          Every new starter gets these steps. Steps marked automatic tick themselves; managers tick the rest. Changes apply to
+          new starters added from now on.
+        </p>
+        <ol className="mb-4 list-decimal space-y-2 pl-5 text-sm">
+          {(steps ?? []).map((s) => (
+            <li key={s.id}>
+              <span className="flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  {s.title}{" "}
+                  {s.automation && <Badge tone="green">Automatic {automationNames[s.automation]}</Badge>}
+                </span>
+                <form action={removeChecklistStep.bind(null, s.id)}>
+                  <button className="text-xs text-stone-500 hover:text-red-700 hover:underline">Remove</button>
+                </form>
+              </span>
+            </li>
+          ))}
+        </ol>
+        <ActionForm action={addChecklistStep} submitLabel="Add step" variant="secondary" className="flex flex-wrap items-end gap-3">
+          <div className="min-w-60 flex-1">
+            <Field label="New step">
+              <Input name="title" required />
+            </Field>
           </div>
-          <Field label="Send the weekly email on">
-            <Select name="weekly_digest_day" defaultValue={String(s.weekly_digest_day)}>
-              {[1, 2, 3, 4, 5, 6, 0].map((d) => (
-                <option key={d} value={d}>
-                  {weekdayName(d)}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <p className="text-xs text-stone-500">Emails go out early each morning (UK time).</p>
         </ActionForm>
       </Card>
     </>

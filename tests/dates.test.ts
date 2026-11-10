@@ -1,15 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatLengthOfService, lengthOfService, todayInLondon, upcomingEvents, type EventEmployee } from "@/lib/dates";
-
-const person = (overrides: Partial<EventEmployee>): EventEmployee => ({
-  id: "1",
-  first_name: "Sam",
-  last_name: "Smith",
-  date_of_birth: null,
-  start_date: null,
-  leave_date: null,
-  ...overrides,
-});
+import { addMonths, formatLengthOfService, formatTimeUntil, lengthOfService, nextMilestone, todayInLondon } from "@/lib/dates";
 
 describe("lengthOfService", () => {
   it("counts whole months", () => {
@@ -50,53 +40,41 @@ describe("todayInLondon", () => {
   });
 });
 
-describe("upcomingEvents", () => {
-  it("finds birthdays, anniversaries, starters and leavers in the window", () => {
-    const events = upcomingEvents(
-      [
-        person({ id: "a", first_name: "Ann", date_of_birth: "1990-10-10", start_date: "2020-10-12" }),
-        person({ id: "b", first_name: "Ben", start_date: "2026-10-13" }),
-        person({ id: "c", first_name: "Cat", start_date: "2019-01-01", leave_date: "2026-10-09" }),
-        person({ id: "d", first_name: "Dan", date_of_birth: "1990-10-20" }),
-      ],
-      "2026-10-08",
-      7,
-    );
-    expect(events.map((e) => [e.date, e.type, e.employeeId])).toEqual([
-      ["2026-10-09", "leave", "c"],
-      ["2026-10-10", "birthday", "a"],
-      ["2026-10-12", "anniversary", "a"],
-      ["2026-10-13", "start", "b"],
-    ]);
-    expect(events[2].label).toBe("6 years at the nursery");
+describe("nextMilestone", () => {
+  it("finds the next 1, 5, 10, 15 or 20 year anniversary", () => {
+    expect(nextMilestone("2026-03-01", "2026-11-10")).toEqual({ years: 1, date: "2027-03-01" });
+    expect(nextMilestone("2023-01-15", "2026-11-10")).toEqual({ years: 5, date: "2028-01-15" });
+    expect(nextMilestone("2021-11-10", "2026-11-10")).toEqual({ years: 5, date: "2026-11-10" });
+    expect(nextMilestone("2008-06-01", "2026-11-10")).toEqual({ years: 20, date: "2028-06-01" });
   });
 
-  it("does not count the first day as an anniversary", () => {
-    const events = upcomingEvents([person({ start_date: "2026-10-08" })], "2026-10-08", 1);
-    expect(events.map((e) => e.type)).toEqual(["start"]);
+  it("returns null after 20 years", () => {
+    expect(nextMilestone("2004-01-01", "2026-11-10")).toBeNull();
   });
 
-  it("skips people who have left", () => {
-    const events = upcomingEvents(
-      [person({ date_of_birth: "1990-10-10", start_date: "2020-10-11", leave_date: "2026-01-01" })],
-      "2026-10-08",
-      7,
-    );
-    expect(events).toEqual([]);
+  it("uses 28 February for 29 February starters in non-leap years", () => {
+    expect(nextMilestone("2024-02-29", "2024-03-01")).toEqual({ years: 1, date: "2025-02-28" });
   });
 
-  it("wraps over the new year", () => {
-    const events = upcomingEvents(
-      [person({ id: "a", date_of_birth: "1990-01-02" }), person({ id: "b", date_of_birth: "1990-12-30" })],
-      "2026-12-29",
-      7,
-    );
-    expect(events.map((e) => e.date)).toEqual(["2026-12-30", "2027-01-02"]);
+  it("counts from the start date for future starters", () => {
+    expect(nextMilestone("2027-01-05", "2026-11-10")).toEqual({ years: 1, date: "2028-01-05" });
   });
+});
 
-  it("marks 29 February birthdays on 28 February in non-leap years", () => {
-    expect(upcomingEvents([person({ date_of_birth: "1992-02-29" })], "2027-02-28", 1)).toHaveLength(1);
-    expect(upcomingEvents([person({ date_of_birth: "1992-02-29" })], "2028-02-28", 1)).toHaveLength(0);
-    expect(upcomingEvents([person({ date_of_birth: "1992-02-29" })], "2028-02-29", 1)).toHaveLength(1);
+describe("formatTimeUntil", () => {
+  it("describes how long until a date", () => {
+    expect(formatTimeUntil("2026-11-10", "2026-11-10")).toBe("today");
+    expect(formatTimeUntil("2026-11-10", "2026-11-11")).toBe("in 1 day");
+    expect(formatTimeUntil("2026-11-10", "2026-12-01")).toBe("in 21 days");
+    expect(formatTimeUntil("2026-11-10", "2027-02-15")).toBe("in 3 mths");
+    expect(formatTimeUntil("2026-11-10", "2028-01-15")).toBe("in 1 yr 2 mths");
+  });
+});
+
+describe("addMonths", () => {
+  it("adds months, keeping to the end of shorter months", () => {
+    expect(addMonths("2026-11-10", 36)).toBe("2029-11-10");
+    expect(addMonths("2026-01-31", 1)).toBe("2026-02-28");
+    expect(addMonths("2026-12-15", 1)).toBe("2027-01-15");
   });
 });

@@ -6,7 +6,7 @@ import { requireSession, type Role } from "@/lib/auth";
 import { inviteUser } from "@/lib/invite";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const roles: Role[] = ["admin", "manager", "staff"];
+const roles: Role[] = ["admin", "manager"];
 
 // Profile changes use the service role: the database has no update rules for
 // profiles, so nobody can change a role except through these admin checks.
@@ -19,7 +19,7 @@ export async function inviteAction(_: ActionState, formData: FormData): Promise<
   if (!email || !fullName) return { error: "Enter their name and email." };
   if (!roles.includes(role)) return { error: "Choose a role." };
 
-  const result = await inviteUser({ email, fullName, role, employeeId: text(formData, "employee_id") });
+  const result = await inviteUser({ email, fullName, role });
   revalidatePath("/admin/users");
   return result;
 }
@@ -33,20 +33,6 @@ export async function changeRole(userId: string, _: ActionState, formData: FormD
   const { error } = await createAdminClient().from("profiles").update({ role }).eq("id", userId);
   revalidatePath("/admin/users");
   return failed(error) ?? { message: "Saved." };
-}
-
-export async function linkEmployee(userId: string, _: ActionState, formData: FormData): Promise<ActionState> {
-  await requireSession("admin");
-  const employeeId = text(formData, "employee_id");
-  const admin = createAdminClient();
-  const { error: unlinkError } = await admin.from("employees").update({ profile_id: null }).eq("profile_id", userId);
-  if (unlinkError) return failed(unlinkError);
-  if (employeeId) {
-    const { error } = await admin.from("employees").update({ profile_id: userId }).eq("id", employeeId);
-    if (error) return failed(error);
-  }
-  revalidatePath("/admin/users");
-  return { message: "Saved." };
 }
 
 export async function setActive(userId: string, active: boolean) {

@@ -1,4 +1,6 @@
-export type ActionState = { error?: string; message?: string } | null;
+// `link` is shown under the message for the user to copy (e.g. a starter form
+// link when the email couldn't be sent).
+export type ActionState = { error?: string; message?: string; link?: string } | null;
 
 // Turns a Supabase error into a message suitable for the person using the app.
 // Only our own database messages (raised with code P0001) are shown as-is.

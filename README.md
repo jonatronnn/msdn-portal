@@ -8,46 +8,51 @@ Tailwind CSS. Designed to be hosted on Vercel, with Supabase's London region.
 
 ## Who sees what
 
-| | Owner / admin | Manager | Staff |
-|---|---|---|---|
-| Two-step sign-in (authenticator app) | Required | Required | — |
-| Staff directory, records, contracts, onboarding | ✔ | ✔ | Own record only |
-| Payslips | All (upload & view) | Own only | Own only |
-| P45s | All (upload & view) | Own only | Own only |
-| Policies & handbook | Publish & archive | Read, see who's acknowledged | Read & acknowledge |
-| Onboarding checklist template | Edit | View | — |
-| New children (starter checklists) | ✔ | ✔ | — |
-| Children's checklist template | Edit | View | — |
-| Users (invite, roles, deactivate, reset 2FA) | ✔ | — | — |
-| Notification settings | ✔ | — | — |
+Only the owner and managers log in. Staff don't have accounts: new starters fill
+in their details through a one-off emailed link.
+
+| | Owner | Manager |
+|---|---|---|
+| Two-step sign-in (authenticator app) | Required | Required |
+| Staff records, training, contracts, onboarding | ✔ | ✔ |
+| Bank details | View and change | Only sees whether they're on file |
+| Training types and new starter checklist | Edit | — |
+| New children (starter checklists) | ✔ | ✔ |
+| Children's checklist template | Edit | View |
+| Users (invite, roles, deactivate, reset 2FA) | ✔ | — |
 
 These rules are enforced **in the database** (Postgres row-level security), not
-just by hiding pages, and admins/managers get nothing beyond a staff member's
-access until they have completed two-step sign-in. Files (contracts, policies,
-payslips) live in private storage and are only handed out as one-minute links
-after the database confirms the person may see them.
+just by hiding pages, and nobody gets any access until they've completed
+two-step sign-in. Bank details are also **encrypted** by the app before they're
+stored (AES-256-GCM, key in `BANK_DETAILS_KEY`). Contract PDFs live in private
+storage and are only handed out as one-minute links.
 
 ## What's in the Staff module
 
-- **Staff directory** – current staff by default, toggle to all staff (leavers).
-  Name, DOB, address, phone numbers, email, start date, qualification level,
-  other qualifications, job title, employee ID, payroll ID, National Insurance
-  number, emergency contact, leave date and reason, and length of service (worked out automatically; stops at the leave date).
-- **Contracts** – send a PDF for electronic signature (the employee reads it,
-  ticks to agree and types their name; the date, time, IP address and a
-  SHA-256 fingerprint of the exact file are recorded), or upload a paper-signed copy.
-- **Policy acknowledgements** – tick boxes on each staff record, and staff can
-  confirm "I have read and understood this" themselves in the handbook.
-- **Onboarding** – every new employee gets the standard checklist (editable by
-  admins); managers tick tasks off. Invite a new starter to the portal and they
-  fill in the **new starter form** (including NI number, emergency contact and
-  an optional P45 upload), which goes straight into their record.
-- **Policies & handbook** – PDFs for everyone to read.
-- **Payslips** – export the PDFs from QuickBooks and bulk-upload them; each is
-  matched to an employee by the payroll ID in its file name.
-- **Email notifications** – birthday and work-anniversary emails on the day, and
-  a weekly email of the coming week's birthdays, anniversaries, starters and
-  leavers, to the addresses set under Admin → Notifications.
+- **Staff directory** – current staff with length of service (years and months)
+  and how long until their next major work anniversary (1, 5, 10, 15 or 20
+  years). Former staff are in the **Archive**, with leave date and reason.
+- **Staff records** – the details managers enter (name, email, job title, start
+  date, contract type / end date / notice period / probation, working pattern,
+  contracted hours, pay rate, qualification level and date), the details the
+  employee gives on their form (date of birth, mobile, home address, emergency
+  contact, NI number, bank details) and the payroll reference added afterwards.
+  The record lists anything still to add. Employment is ended from the record
+  (leave date and reason), which moves them to the archive after that date.
+- **Training** – first aid, safeguarding, FGM awareness and so on, with
+  completion and expiry dates. The expiry is worked out from the course length
+  if left blank, and expired or soon-to-expire training is flagged on the
+  record and the dashboard. The owner edits the list of training types.
+- **Contract** – upload the signed contract PDF.
+- **Onboarding** – *New starter*: enter their name and email and the portal
+  creates their record and checklist and emails them the **Important information
+  form** (a one-off link, valid for 14 days). What they submit goes straight into
+  their record. Checklist steps record who ticked them and when; these tick
+  themselves: form sent, form returned, employment details completed, signed
+  contract uploaded, and payroll reference added. If email isn't set up, the
+  manager is shown the link to send another way.
+- **Dashboard** – major anniversaries and training to renew in the next 60
+  days, and who is being onboarded.
 
 ## What's in the Children module
 
@@ -80,7 +85,7 @@ two-step sign-in with an authenticator app.
 ```bash
 npm run lint
 npm run typecheck
-npm test          # unit tests (dates, length of service, payslip matching)
+npm test          # unit tests (dates, anniversaries, NI and bank checks, encryption)
 npm run test:db   # access-rule tests against a throwaway Postgres (needs initdb/pg_ctl)
 ```
 
@@ -104,11 +109,12 @@ After changing the database, regenerate the TypeScript types with
      `recovery.html` (the links must point to `/auth/confirm`), and set up
      custom SMTP so invitations come from the nursery's domain.
 2. **Email** – create a [Resend](https://resend.com) account, verify the
-   nursery's domain and create an API key (used for contract and notification emails).
+   nursery's domain and create an API key (used for the Important information form).
 3. **Vercel** – import the repository and set the environment variables from
-   `.env.example` (`SUPABASE_SECRET_KEY`, `CRON_SECRET` and `RESEND_API_KEY` are
-   secrets). `vercel.json` runs the notification job every morning and pins the
-   app to the London region.
+   `.env.example` (`SUPABASE_SECRET_KEY`, `BANK_DETAILS_KEY` and `RESEND_API_KEY`
+   are secrets). Generate `BANK_DETAILS_KEY` with `openssl rand -base64 32` and
+   keep a copy somewhere safe: without it, stored bank details can't be read.
+   `vercel.json` pins the app to the London region.
 4. Create the first owner account:
    `node --env-file=.env.production scripts/create-admin.mjs owner@… "Name"`,
    then invite everyone else from **Admin → Users**.
@@ -116,7 +122,7 @@ After changing the database, regenerate the TypeScript types with
 ## Adding a module
 
 1. Add tables and their access rules in a new file in `supabase/migrations/`,
-   using `is_admin()`, `is_manager_or_admin()` and `current_employee_id()`.
+   using `is_admin()` (owner) and `is_manager_or_admin()`.
    Add tests for the rules to `supabase/tests/access_rules.sql`.
 2. Run `npm run db:types`.
 3. Add pages under `src/app/(portal)/<module>/`, calling `requireSession(...)`
@@ -125,10 +131,5 @@ After changing the database, regenerate the TypeScript types with
 
 ## Not done yet
 
-- **Holiday allowance from Famly** – needs Famly API access and documentation
-  to confirm staff leave data is available.
-- **QuickBooks** – payslips are uploaded as PDFs; there's no direct connection.
-  Intuit's Payroll API is restricted to approved developers and it's unclear
-  whether it covers UK payroll. QuickBooks UK already publishes payslips to
-  employees through QuickBooks Workforce.
-- **Children's onboarding module** – to be specified.
+- **Famly sync** – syncing staff details to and from Famly, waiting on access
+  to Famly's API documentation and a token.

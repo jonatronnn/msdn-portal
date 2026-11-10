@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 
-const PUBLIC_PATHS = ["/login", "/auth/", "/api/cron/"];
+// /starter/ is the Important information form new starters open from their email.
+const PUBLIC_PATHS = ["/login", "/auth/", "/starter/"];
 
 // Refreshes the auth session cookie on every request and sends signed-out
 // visitors to the login page. Pages still check permissions themselves.

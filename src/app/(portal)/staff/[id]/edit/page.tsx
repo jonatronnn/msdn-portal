@@ -5,10 +5,10 @@ import { requireSession } from "@/lib/auth";
 import { fullName } from "@/lib/staff";
 import { createClient } from "@/lib/supabase/server";
 import { updateEmployee } from "../../actions";
-import { EmployeeFields } from "../../employee-form";
+import { EmploymentFields, PersonalFields } from "../../employee-form";
 
 export default async function EditEmployeePage({ params }: PageProps<"/staff/[id]/edit">) {
-  await requireSession("admin", "manager");
+  await requireSession();
   const { id } = await params;
   const supabase = await createClient();
   const { data: employee } = await supabase.from("employees").select("*").eq("id", id).maybeSingle();
@@ -20,8 +20,12 @@ export default async function EditEmployeePage({ params }: PageProps<"/staff/[id
         <LinkButton href={`/staff/${id}`}>Cancel</LinkButton>
       </PageHeader>
       <Card>
-        <ActionForm action={updateEmployee.bind(null, id)} submitLabel="Save changes">
-          <EmployeeFields employee={employee} />
+        <ActionForm action={updateEmployee.bind(null, id)} submitLabel="Save changes" className="space-y-8">
+          <EmploymentFields employee={employee} />
+          <PersonalFields employee={employee} />
+          <p className="text-sm text-stone-500">
+            Bank details and the end of employment are changed on the staff member&apos;s page.
+          </p>
         </ActionForm>
       </Card>
     </>

@@ -2,7 +2,7 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export type Bucket = "contracts" | "policies" | "payslips" | "p45s";
+export type Bucket = "contracts";
 
 // Keep in step with serverActions.bodySizeLimit in next.config.ts.
 export const MAX_FILE_MB = 4;

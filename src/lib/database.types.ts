@@ -79,14 +79,14 @@ isOneToOne: false
                   ]
                 },"contracts": {
                   Row: {
-                    "created_at": string,"employee_id": string,"id": string,"sent_at": string | null,"sent_by": string | null,"sha256": string,"signed_at": string | null,"signed_ip": string | null,"signed_name": string | null,"signed_user_agent": string | null,"status": Database["public"]['Enums']["contract_status"],"storage_path": string,"title": string,"uploaded_signed": boolean
+                    "employee_id": string,"id": string,"storage_path": string,"title": string,"uploaded_at": string,"uploaded_by_name": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"employee_id": string,"id"?: string,"sent_at"?: string | null,"sent_by"?: string | null,"sha256": string,"signed_at"?: string | null,"signed_ip"?: string | null,"signed_name"?: string | null,"signed_user_agent"?: string | null,"status": Database["public"]['Enums']["contract_status"],"storage_path": string,"title": string,"uploaded_signed"?: boolean
+                    "employee_id": string,"id"?: string,"storage_path": string,"title": string,"uploaded_at"?: string,"uploaded_by_name"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"employee_id"?: string,"id"?: string,"sent_at"?: string | null,"sent_by"?: string | null,"sha256"?: string,"signed_at"?: string | null,"signed_ip"?: string | null,"signed_name"?: string | null,"signed_user_agent"?: string | null,"status"?: Database["public"]['Enums']["contract_status"],"storage_path"?: string,"title"?: string,"uploaded_signed"?: boolean
+                    "employee_id"?: string,"id"?: string,"storage_path"?: string,"title"?: string,"uploaded_at"?: string,"uploaded_by_name"?: string | null
                   }
                   Relationships: [
                     {
@@ -95,106 +95,92 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "employees"
       referencedColumns: ["id"]
-    },{
-      foreignKeyName: "contracts_sent_by_fkey"
-      columns: ["sent_by"]
-isOneToOne: false
-      referencedRelation: "profiles"
-      referencedColumns: ["id"]
     }
                   ]
-                },"employee_qualifications": {
+                },"employee_bank_details": {
                   Row: {
-                    "achieved_on": string | null,"employee_id": string,"id": string,"name": string
+                    "employee_id": string,"encrypted": string,"updated_at": string,"updated_by_name": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "achieved_on"?: string | null,"employee_id": string,"id"?: string,"name": string
+                    "employee_id": string,"encrypted": string,"updated_at"?: string,"updated_by_name"?: string | null
                   }
                   Update: {
-                    "achieved_on"?: string | null,"employee_id"?: string,"id"?: string,"name"?: string
+                    "employee_id"?: string,"encrypted"?: string,"updated_at"?: string,"updated_by_name"?: string | null
                   }
                   Relationships: [
                     {
-      foreignKeyName: "employee_qualifications_employee_id_fkey"
+      foreignKeyName: "employee_bank_details_employee_id_fkey"
+      columns: ["employee_id"]
+isOneToOne: true
+      referencedRelation: "employees"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"employee_training": {
+                  Row: {
+                    "completed_on": string | null,"created_at": string,"employee_id": string,"expires_on": string | null,"id": string,"recorded_by_name": string | null,"training_type_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "completed_on"?: string | null,"created_at"?: string,"employee_id": string,"expires_on"?: string | null,"id"?: string,"recorded_by_name"?: string | null,"training_type_id": string
+                  }
+                  Update: {
+                    "completed_on"?: string | null,"created_at"?: string,"employee_id"?: string,"expires_on"?: string | null,"id"?: string,"recorded_by_name"?: string | null,"training_type_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "employee_training_employee_id_fkey"
       columns: ["employee_id"]
 isOneToOne: false
       referencedRelation: "employees"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "employee_training_training_type_id_fkey"
+      columns: ["training_type_id"]
+isOneToOne: false
+      referencedRelation: "training_types"
       referencedColumns: ["id"]
     }
                   ]
                 },"employees": {
                   Row: {
-                    "address_line1": string | null,"address_line2": string | null,"created_at": string,"date_of_birth": string | null,"email": string | null,"emergency_contact_name": string | null,"emergency_contact_phone": string | null,"emergency_contact_relationship": string | null,"employee_number": string | null,"first_name": string,"home_phone": string | null,"id": string,"job_title": string | null,"last_name": string,"leave_date": string | null,"leave_reason": string | null,"mobile_phone": string | null,"ni_number": string | null,"payroll_id": string | null,"postcode": string | null,"profile_id": string | null,"qualification_level": string | null,"start_date": string | null,"starter_form_completed_at": string | null,"town": string | null,"updated_at": string
+                    "address_line1": string | null,"address_line2": string | null,"bank_details_received_at": string | null,"contract_end_date": string | null,"contract_type": string | null,"contracted_hours": number | null,"created_at": string,"date_of_birth": string | null,"email": string,"emergency_contact_name": string | null,"emergency_contact_phone": string | null,"emergency_contact_relationship": string | null,"first_name": string,"id": string,"info_form_submitted_at": string | null,"job_title": string | null,"last_name": string,"leave_date": string | null,"leave_reason": string | null,"mobile_phone": string | null,"ni_number": string | null,"notice_period": string | null,"pay_rate": number | null,"pay_rate_basis": string | null,"payroll_id": string | null,"postcode": string | null,"probation_end_date": string | null,"qualification_date": string | null,"qualification_level": string | null,"start_date": string | null,"town": string | null,"updated_at": string,"working_pattern": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "address_line1"?: string | null,"address_line2"?: string | null,"created_at"?: string,"date_of_birth"?: string | null,"email"?: string | null,"emergency_contact_name"?: string | null,"emergency_contact_phone"?: string | null,"emergency_contact_relationship"?: string | null,"employee_number"?: string | null,"first_name": string,"home_phone"?: string | null,"id"?: string,"job_title"?: string | null,"last_name": string,"leave_date"?: string | null,"leave_reason"?: string | null,"mobile_phone"?: string | null,"ni_number"?: string | null,"payroll_id"?: string | null,"postcode"?: string | null,"profile_id"?: string | null,"qualification_level"?: string | null,"start_date"?: string | null,"starter_form_completed_at"?: string | null,"town"?: string | null,"updated_at"?: string
+                    "address_line1"?: string | null,"address_line2"?: string | null,"bank_details_received_at"?: string | null,"contract_end_date"?: string | null,"contract_type"?: string | null,"contracted_hours"?: number | null,"created_at"?: string,"date_of_birth"?: string | null,"email": string,"emergency_contact_name"?: string | null,"emergency_contact_phone"?: string | null,"emergency_contact_relationship"?: string | null,"first_name": string,"id"?: string,"info_form_submitted_at"?: string | null,"job_title"?: string | null,"last_name": string,"leave_date"?: string | null,"leave_reason"?: string | null,"mobile_phone"?: string | null,"ni_number"?: string | null,"notice_period"?: string | null,"pay_rate"?: number | null,"pay_rate_basis"?: string | null,"payroll_id"?: string | null,"postcode"?: string | null,"probation_end_date"?: string | null,"qualification_date"?: string | null,"qualification_level"?: string | null,"start_date"?: string | null,"town"?: string | null,"updated_at"?: string,"working_pattern"?: string | null
                   }
                   Update: {
-                    "address_line1"?: string | null,"address_line2"?: string | null,"created_at"?: string,"date_of_birth"?: string | null,"email"?: string | null,"emergency_contact_name"?: string | null,"emergency_contact_phone"?: string | null,"emergency_contact_relationship"?: string | null,"employee_number"?: string | null,"first_name"?: string,"home_phone"?: string | null,"id"?: string,"job_title"?: string | null,"last_name"?: string,"leave_date"?: string | null,"leave_reason"?: string | null,"mobile_phone"?: string | null,"ni_number"?: string | null,"payroll_id"?: string | null,"postcode"?: string | null,"profile_id"?: string | null,"qualification_level"?: string | null,"start_date"?: string | null,"starter_form_completed_at"?: string | null,"town"?: string | null,"updated_at"?: string
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "employees_profile_id_fkey"
-      columns: ["profile_id"]
-isOneToOne: true
-      referencedRelation: "profiles"
-      referencedColumns: ["id"]
-    }
-                  ]
-                },"notification_log": {
-                  Row: {
-                    "key": string,"sent_at": string
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "key": string,"sent_at"?: string
-                  }
-                  Update: {
-                    "key"?: string,"sent_at"?: string
-                  }
-                  Relationships: [
-                    
-                  ]
-                },"notification_settings": {
-                  Row: {
-                    "anniversaries_enabled": boolean,"birthdays_enabled": boolean,"id": number,"recipients": (string)[],"weekly_digest_day": number,"weekly_digest_enabled": boolean
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "anniversaries_enabled"?: boolean,"birthdays_enabled"?: boolean,"id"?: number,"recipients"?: (string)[],"weekly_digest_day"?: number,"weekly_digest_enabled"?: boolean
-                  }
-                  Update: {
-                    "anniversaries_enabled"?: boolean,"birthdays_enabled"?: boolean,"id"?: number,"recipients"?: (string)[],"weekly_digest_day"?: number,"weekly_digest_enabled"?: boolean
+                    "address_line1"?: string | null,"address_line2"?: string | null,"bank_details_received_at"?: string | null,"contract_end_date"?: string | null,"contract_type"?: string | null,"contracted_hours"?: number | null,"created_at"?: string,"date_of_birth"?: string | null,"email"?: string,"emergency_contact_name"?: string | null,"emergency_contact_phone"?: string | null,"emergency_contact_relationship"?: string | null,"first_name"?: string,"id"?: string,"info_form_submitted_at"?: string | null,"job_title"?: string | null,"last_name"?: string,"leave_date"?: string | null,"leave_reason"?: string | null,"mobile_phone"?: string | null,"ni_number"?: string | null,"notice_period"?: string | null,"pay_rate"?: number | null,"pay_rate_basis"?: string | null,"payroll_id"?: string | null,"postcode"?: string | null,"probation_end_date"?: string | null,"qualification_date"?: string | null,"qualification_level"?: string | null,"start_date"?: string | null,"town"?: string | null,"updated_at"?: string,"working_pattern"?: string | null
                   }
                   Relationships: [
                     
                   ]
                 },"onboarding_task_templates": {
                   Row: {
-                    "active": boolean,"id": string,"sort_order": number,"title": string
+                    "active": boolean,"automation": string | null,"id": string,"sort_order": number,"title": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"id"?: string,"sort_order"?: number,"title": string
+                    "active"?: boolean,"automation"?: string | null,"id"?: string,"sort_order"?: number,"title": string
                   }
                   Update: {
-                    "active"?: boolean,"id"?: string,"sort_order"?: number,"title"?: string
+                    "active"?: boolean,"automation"?: string | null,"id"?: string,"sort_order"?: number,"title"?: string
                   }
                   Relationships: [
                     
                   ]
                 },"onboarding_tasks": {
                   Row: {
-                    "completed_at": string | null,"completed_by": string | null,"employee_id": string,"id": string,"sort_order": number,"title": string
+                    "automation": string | null,"completed_at": string | null,"completed_by": string | null,"completed_by_name": string | null,"employee_id": string,"id": string,"sort_order": number,"title": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "completed_at"?: string | null,"completed_by"?: string | null,"employee_id": string,"id"?: string,"sort_order"?: number,"title": string
+                    "automation"?: string | null,"completed_at"?: string | null,"completed_by"?: string | null,"completed_by_name"?: string | null,"employee_id": string,"id"?: string,"sort_order"?: number,"title": string
                   }
                   Update: {
-                    "completed_at"?: string | null,"completed_by"?: string | null,"employee_id"?: string,"id"?: string,"sort_order"?: number,"title"?: string
+                    "automation"?: string | null,"completed_at"?: string | null,"completed_by"?: string | null,"completed_by_name"?: string | null,"employee_id"?: string,"id"?: string,"sort_order"?: number,"title"?: string
                   }
                   Relationships: [
                     {
@@ -208,104 +194,6 @@ isOneToOne: false
       columns: ["employee_id"]
 isOneToOne: false
       referencedRelation: "employees"
-      referencedColumns: ["id"]
-    }
-                  ]
-                },"p45s": {
-                  Row: {
-                    "employee_id": string,"id": string,"storage_path": string,"uploaded_at": string,"uploaded_by": string | null
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "employee_id": string,"id"?: string,"storage_path": string,"uploaded_at"?: string,"uploaded_by"?: string | null
-                  }
-                  Update: {
-                    "employee_id"?: string,"id"?: string,"storage_path"?: string,"uploaded_at"?: string,"uploaded_by"?: string | null
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "p45s_employee_id_fkey"
-      columns: ["employee_id"]
-isOneToOne: true
-      referencedRelation: "employees"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "p45s_uploaded_by_fkey"
-      columns: ["uploaded_by"]
-isOneToOne: false
-      referencedRelation: "profiles"
-      referencedColumns: ["id"]
-    }
-                  ]
-                },"payslips": {
-                  Row: {
-                    "employee_id": string,"file_name": string,"id": string,"pay_date": string,"storage_path": string,"uploaded_at": string,"uploaded_by": string | null
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "employee_id": string,"file_name": string,"id"?: string,"pay_date": string,"storage_path": string,"uploaded_at"?: string,"uploaded_by"?: string | null
-                  }
-                  Update: {
-                    "employee_id"?: string,"file_name"?: string,"id"?: string,"pay_date"?: string,"storage_path"?: string,"uploaded_at"?: string,"uploaded_by"?: string | null
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "payslips_employee_id_fkey"
-      columns: ["employee_id"]
-isOneToOne: false
-      referencedRelation: "employees"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "payslips_uploaded_by_fkey"
-      columns: ["uploaded_by"]
-isOneToOne: false
-      referencedRelation: "profiles"
-      referencedColumns: ["id"]
-    }
-                  ]
-                },"policies": {
-                  Row: {
-                    "archived": boolean,"created_at": string,"description": string | null,"id": string,"requires_acknowledgement": boolean,"storage_path": string,"title": string
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "archived"?: boolean,"created_at"?: string,"description"?: string | null,"id"?: string,"requires_acknowledgement"?: boolean,"storage_path": string,"title": string
-                  }
-                  Update: {
-                    "archived"?: boolean,"created_at"?: string,"description"?: string | null,"id"?: string,"requires_acknowledgement"?: boolean,"storage_path"?: string,"title"?: string
-                  }
-                  Relationships: [
-                    
-                  ]
-                },"policy_acknowledgements": {
-                  Row: {
-                    "acknowledged_at": string,"employee_id": string,"policy_id": string,"recorded_by": string | null
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "acknowledged_at"?: string,"employee_id": string,"policy_id": string,"recorded_by"?: string | null
-                  }
-                  Update: {
-                    "acknowledged_at"?: string,"employee_id"?: string,"policy_id"?: string,"recorded_by"?: string | null
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "policy_acknowledgements_employee_id_fkey"
-      columns: ["employee_id"]
-isOneToOne: false
-      referencedRelation: "employees"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "policy_acknowledgements_policy_id_fkey"
-      columns: ["policy_id"]
-isOneToOne: false
-      referencedRelation: "policies"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "policy_acknowledgements_recorded_by_fkey"
-      columns: ["recorded_by"]
-isOneToOne: false
-      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -323,6 +211,40 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"starter_form_links": {
+                  Row: {
+                    "employee_id": string,"expires_at": string,"id": string,"revoked_at": string | null,"sent_at": string,"sent_by_name": string | null,"sent_to": string,"token_hash": string,"used_at": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "employee_id": string,"expires_at": string,"id"?: string,"revoked_at"?: string | null,"sent_at"?: string,"sent_by_name"?: string | null,"sent_to": string,"token_hash": string,"used_at"?: string | null
+                  }
+                  Update: {
+                    "employee_id"?: string,"expires_at"?: string,"id"?: string,"revoked_at"?: string | null,"sent_at"?: string,"sent_by_name"?: string | null,"sent_to"?: string,"token_hash"?: string,"used_at"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "starter_form_links_employee_id_fkey"
+      columns: ["employee_id"]
+isOneToOne: false
+      referencedRelation: "employees"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"training_types": {
+                  Row: {
+                    "active": boolean,"id": string,"name": string,"validity_months": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"id"?: string,"name": string,"validity_months"?: number | null
+                  }
+                  Update: {
+                    "active"?: boolean,"id"?: string,"name"?: string,"validity_months"?: number | null
+                  }
+                  Relationships: [
+                    
+                  ]
                 }
           }
           Views: {
@@ -332,9 +254,6 @@ isOneToOne: false
             "current_app_role":
 { Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["app_role"]
                            },
-"current_employee_id":
-{ Args: Record<PropertyKey, never>; Returns: string
-                           },
 "has_mfa":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -343,16 +262,10 @@ isOneToOne: false
                            },
 "is_manager_or_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
-                           },
-"sign_contract":
-{ Args: { "p_contract_id": string,"p_ip": string,"p_signed_name": string,"p_user_agent": string }; Returns: undefined
-                           },
-"submit_starter_form":
-{ Args: { "p_address_line1": string,"p_address_line2": string,"p_date_of_birth": string,"p_email": string,"p_emergency_contact_name": string,"p_emergency_contact_phone": string,"p_emergency_contact_relationship": string,"p_home_phone": string,"p_mobile_phone": string,"p_ni_number": string,"p_other_qualifications": Json,"p_postcode": string,"p_qualification_level": string,"p_town": string }; Returns: undefined
                            }
           }
           Enums: {
-            "app_role": "admin"|"manager"|"staff","contract_status": "sent"|"signed"|"void"
+            "app_role": "admin"|"manager"|"staff"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -472,7 +385,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "app_role": ["admin", "manager", "staff"],"contract_status": ["sent", "signed", "void"]
+            "app_role": ["admin", "manager", "staff"]
           }
         }
 } as const

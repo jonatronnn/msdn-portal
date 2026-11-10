@@ -8,12 +8,10 @@ export async function inviteUser({
   email,
   fullName,
   role,
-  employeeId,
 }: {
   email: string;
   fullName: string;
   role: Role;
-  employeeId: string | null;
 }) {
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.inviteUserByEmail(email);
@@ -32,9 +30,5 @@ export async function inviteUser({
     return { error: "The invitation was sent but the account couldn't be set up. Please contact support." };
   }
 
-  if (employeeId) {
-    const { error: linkError } = await admin.from("employees").update({ profile_id: data.user.id }).eq("id", employeeId);
-    if (linkError) console.error(linkError);
-  }
   return { message: `Invitation sent to ${email}.` };
 }

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { navFor } from "@/modules/registry";
 
-const roleNames = { admin: "Owner / admin", manager: "Manager", staff: "Staff" };
+const roleNames = { admin: "Owner", manager: "Manager" };
 
 export default async function PortalLayout({ children }: LayoutProps<"/">) {
   const session = await requireSession();
