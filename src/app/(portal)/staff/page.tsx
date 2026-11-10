@@ -25,6 +25,7 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
           New starter
         </LinkButton>
         <LinkButton href="/staff/new">Add existing staff member</LinkButton>
+        <LinkButton href="/staff/import">Import from Famly</LinkButton>
       </PageHeader>
       <Card
         actions={

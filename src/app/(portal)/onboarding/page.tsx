@@ -34,6 +34,7 @@ export default async function OnboardingPage() {
         <LinkButton href="/onboarding/new" variant="primary">
           New starter
         </LinkButton>
+        <LinkButton href="/staff/import">Import from Famly</LinkButton>
       </PageHeader>
       <Card title="New starters in progress">
         {inProgress.length ? (

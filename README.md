@@ -51,6 +51,14 @@ storage and are only handed out as one-minute links.
   themselves: form sent, form returned, employment details completed, signed
   contract uploaded, and payroll reference added. If email isn't set up, the
   manager is shown the link to send another way.
+- **Famly** – *Import from Famly* lists Famly staff who aren't in the portal yet;
+  tick who to bring across (optionally as new starters, with the checklist).
+  Anyone already in the portal with the same email is linked, not duplicated.
+  On a staff record, *Add to Famly* creates them in Famly (you choose their
+  room) and *Send changes to Famly* updates their name, email, job title, date
+  of birth, mobile, address and start/leave dates. Only these fields are
+  sent, so their Famly app role and holiday allowance are never touched. The
+  "Added to Famly" checklist step ticks itself. Needs `FAMLY_API_TOKEN`.
 - **Dashboard** – major anniversaries and training to renew in the next 60
   days, who is being onboarded, and an **email list**: tick current staff (or
   select all) to get their addresses ready to paste into an email.
@@ -132,5 +140,5 @@ After changing the database, regenerate the TypeScript types with
 
 ## Not done yet
 
-- **Famly sync** – syncing staff details to and from Famly, waiting on access
-  to Famly's API documentation and a token.
+- **Famly token** – the Famly buttons are built and tested against a stand-in
+  for Famly's API; they switch on once `FAMLY_API_TOKEN` is set in Vercel.

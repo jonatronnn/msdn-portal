@@ -7,6 +7,8 @@ import { actorName, requireSession } from "@/lib/auth";
 import { encryptJson } from "@/lib/crypto";
 import { addMonths } from "@/lib/dates";
 import { env } from "@/lib/env";
+import { createFamlyEmployee, listFamlyEmployees, listFamlyRooms, updateFamlyEmployee } from "@/lib/famly";
+import { fromFamly, toFamly } from "@/lib/famly-mapping";
 import { checkRecordAutomations, completeAutomation, sendStarterForm } from "@/lib/onboarding";
 import {
   CONTRACT_TYPES,
@@ -84,6 +86,17 @@ function checkPersonal(f: ReturnType<typeof personalFields>) {
   return null;
 }
 
+async function addChecklist(supabase: Awaited<ReturnType<typeof createClient>>, employeeId: string, by: string) {
+  const { data: templates } = await supabase
+    .from("onboarding_task_templates")
+    .select("title, automation, sort_order")
+    .eq("active", true);
+  if (templates?.length) {
+    await supabase.from("onboarding_tasks").insert(templates.map((t) => ({ ...t, employee_id: employeeId })));
+  }
+  await checkRecordAutomations(supabase, employeeId, by);
+}
+
 async function createEmployee(
   formData: FormData,
   fields: Partial<ReturnType<typeof employmentFields>> & { first_name: string; last_name: string; email: string },
@@ -95,16 +108,7 @@ async function createEmployee(
   const { data, error } = await supabase.from("employees").insert(fields).select("id, first_name, email").single();
   if (error) return failed(error);
 
-  if (withChecklist) {
-    const { data: templates } = await supabase
-      .from("onboarding_task_templates")
-      .select("title, automation, sort_order")
-      .eq("active", true);
-    if (templates?.length) {
-      await supabase.from("onboarding_tasks").insert(templates.map((t) => ({ ...t, employee_id: data.id })));
-    }
-    await checkRecordAutomations(supabase, data.id, by);
-  }
+  if (withChecklist) await addChecklist(supabase, data.id, by);
 
   if (formData.get("send_form") === "on") {
     const sent = await sendStarterForm(supabase, data, by);
@@ -302,4 +306,110 @@ export async function removeTask(id: string, taskId: string) {
   const supabase = await createClient();
   await supabase.from("onboarding_tasks").delete().eq("id", taskId);
   revalidatePath(`/staff/${id}`);
+}
+
+export async function addToFamly(id: string, _: ActionState, formData: FormData): Promise<ActionState> {
+  const session = await requireSession();
+  const supabase = await createClient();
+  const { data: e } = await supabase.from("employees").select("*").eq("id", id).single();
+  if (!e) return { error: "Employee not found." };
+  if (e.famly_id) return { error: "Already in Famly." };
+  if (!e.start_date) return { error: "Add their start date first: Famly needs it." };
+
+  try {
+    const room = (await listFamlyRooms()).find((r) => r.id === formData.get("room_id"));
+    if (!room) return { error: "Choose their room." };
+    const famlyId = await createFamlyEmployee(toFamly(e), room);
+    await supabase
+      .from("employees")
+      .update({ famly_id: famlyId, famly_group_id: room.id, famly_synced_at: new Date().toISOString() })
+      .eq("id", id);
+  } catch {
+    return { error: "Couldn't add them to Famly. Please try again." };
+  }
+  await completeAutomation(supabase, id, "famly", actorName(session));
+  revalidatePath(`/staff/${id}`);
+  return { message: "Added to Famly." };
+}
+
+export async function sendChangesToFamly(id: string, _: ActionState): Promise<ActionState> {
+  await requireSession();
+  const supabase = await createClient();
+  const { data: e } = await supabase.from("employees").select("*").eq("id", id).single();
+  if (!e?.famly_id) return { error: "They aren't linked to Famly yet." };
+
+  try {
+    await updateFamlyEmployee(e.famly_id, toFamly(e));
+  } catch {
+    return { error: "Couldn't update Famly. Please try again." };
+  }
+  await supabase.from("employees").update({ famly_synced_at: new Date().toISOString() }).eq("id", id);
+  revalidatePath(`/staff/${id}`);
+  return { message: "Famly updated." };
+}
+
+// Brings the chosen Famly staff into the portal. Anyone already here with the
+// same email is linked to their existing record rather than duplicated.
+export async function importFromFamly(_: ActionState, formData: FormData): Promise<ActionState> {
+  const session = await requireSession();
+  const by = actorName(session);
+  const chosen = new Set(formData.getAll("famly_ids").map(String));
+  if (!chosen.size) return { error: "Tick the people to import." };
+  const withChecklist = formData.get("new_starters") === "on";
+
+  let famlyStaff;
+  try {
+    famlyStaff = (await listFamlyEmployees()).filter((f) => chosen.has(f.id));
+  } catch {
+    return { error: "Couldn't reach Famly. Please try again." };
+  }
+
+  const supabase = await createClient();
+  const { data: existing } = await supabase.from("employees").select("id, email, famly_id");
+  let imported = 0;
+  let linked = 0;
+  const skipped: string[] = [];
+  for (const f of famlyStaff) {
+    const fields = fromFamly(f);
+    if (existing?.some((e) => e.famly_id === f.id)) continue;
+    if (!fields.email) {
+      skipped.push(`${fields.first_name} (no email in Famly)`);
+      continue;
+    }
+    const match = existing?.find((e) => !e.famly_id && e.email === fields.email);
+    let employeeId: string;
+    if (match) {
+      const { error } = await supabase
+        .from("employees")
+        .update({ famly_id: f.id, famly_group_id: f.groupId, famly_synced_at: new Date().toISOString() })
+        .eq("id", match.id);
+      if (error) {
+        skipped.push(fields.first_name);
+        continue;
+      }
+      employeeId = match.id;
+      linked++;
+    } else {
+      const { data, error } = await supabase
+        .from("employees")
+        .insert({ ...fields, famly_synced_at: new Date().toISOString() })
+        .select("id")
+        .single();
+      if (error || !data) {
+        console.error(error);
+        skipped.push(fields.first_name);
+        continue;
+      }
+      employeeId = data.id;
+      if (withChecklist) await addChecklist(supabase, employeeId, by);
+      imported++;
+    }
+    await completeAutomation(supabase, employeeId, "famly", by);
+  }
+
+  revalidatePath("/staff");
+  const parts = [`Imported ${imported}`, linked ? `linked ${linked} already in the portal` : ""].filter(Boolean);
+  return {
+    message: `${parts.join(", ")}.${skipped.length ? ` Not imported: ${skipped.join(", ")}.` : ""}`,
+  };
 }

@@ -22,6 +22,7 @@ import {
   setTaskDone,
   uploadContract,
 } from "../actions";
+import { FamlyCard } from "../famly-card";
 
 // Training expiring within this many days is flagged.
 const EXPIRY_WARNING_DAYS = 60;
@@ -342,6 +343,8 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
           </ActionForm>
         </Card>
       )}
+
+      <FamlyCard employee={e} />
 
       <Card title="End of employment">
         {e.leave_date ? (
