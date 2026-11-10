@@ -29,13 +29,20 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
       </PageHeader>
       <Card
         actions={
-          <div className="flex rounded-md border border-stone-300 text-sm" role="group" aria-label="Show">
-            <Link href="/staff" className={`px-3 py-1.5 ${archive ? "" : "bg-teal-700 text-white"}`} aria-current={!archive}>
-              Current staff
-            </Link>
-            <Link href="/staff?view=archive" className={`px-3 py-1.5 ${archive ? "bg-teal-700 text-white" : ""}`} aria-current={archive}>
-              Archive
-            </Link>
+          <div className="flex rounded-lg bg-stone-100 p-1 text-sm" role="group" aria-label="Show">
+            {[
+              ["/staff", "Current staff", !archive],
+              ["/staff?view=archive", "Archive", archive],
+            ].map(([href, label, active]) => (
+              <Link
+                key={label as string}
+                href={href as string}
+                aria-current={active as boolean}
+                className={`rounded-md px-3 py-1.5 font-medium transition ${active ? "bg-white text-teal-800 shadow-sm" : "text-stone-500 hover:text-stone-800"}`}
+              >
+                {label}
+              </Link>
+            ))}
           </div>
         }
       >

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Icon, type IconName } from "@/components/icons";
 import { Badge, Card, Empty, PageHeader } from "@/components/ui";
 import { requireSession } from "@/lib/auth";
 import { addDays, formatDate, formatTimeUntil, isCurrentEmployee, nextMilestone, todayInLondon } from "@/lib/dates";
@@ -54,9 +55,15 @@ export default async function Dashboard() {
     <>
       <PageHeader title={`Hello${session.fullName ? `, ${session.fullName.split(" ")[0]}` : ""}`} />
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <Stat label="Current staff" value={current.length} href="/staff" />
-        <Stat label="New starters being onboarded" value={onboarding} href="/onboarding" />
-        <Stat label="Training expired or expiring soon" value={expiring.length} href="#training" />
+        <Stat label="Current staff" value={current.length} href="/staff" icon="users" tone="teal" />
+        <Stat label="New starters being onboarded" value={onboarding} href="/onboarding" icon="clipboard" tone="sky" />
+        <Stat
+          label="Training expired or expiring soon"
+          value={expiring.length}
+          href="#training"
+          icon="alert"
+          tone={expiring.length ? "amber" : "teal"}
+        />
       </div>
 
       <Card title={`Major work anniversaries in the next ${LOOKAHEAD_DAYS} days`}>
@@ -113,11 +120,37 @@ export default async function Dashboard() {
   );
 }
 
-function Stat({ label, value, href }: { label: string; value: number; href: string }) {
+const statTones = {
+  teal: "bg-teal-50 text-teal-700",
+  sky: "bg-sky-50 text-sky-700",
+  amber: "bg-amber-50 text-amber-700",
+};
+
+function Stat({
+  label,
+  value,
+  href,
+  icon,
+  tone,
+}: {
+  label: string;
+  value: number;
+  href: string;
+  icon: IconName;
+  tone: keyof typeof statTones;
+}) {
   return (
-    <Link href={href} className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm hover:border-teal-600">
-      <p className="text-3xl font-semibold text-teal-800">{value}</p>
-      <p className="text-sm text-stone-600">{label}</p>
+    <Link
+      href={href}
+      className="group flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-stone-200/80 transition hover:-translate-y-0.5 hover:shadow-md"
+    >
+      <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${statTones[tone]}`}>
+        <Icon name={icon} className="h-6 w-6" />
+      </span>
+      <span>
+        <span className="block text-3xl font-semibold tracking-tight text-stone-900">{value}</span>
+        <span className="block text-sm text-stone-600">{label}</span>
+      </span>
     </Link>
   );
 }
