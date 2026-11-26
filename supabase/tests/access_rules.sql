@@ -128,6 +128,66 @@ select pg_temp.sign_out();
 
 select pg_temp.expect((select job_title from employees where payroll_id = 'P1'), 'Room leader', 'manager edit kept');
 
+-- Wages ----------------------------------------------------------------------
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b', 'aal2');
+insert into shift_patterns (id, employee_id, effective_from) values
+  ('50000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '2026-01-01');
+insert into shift_pattern_days (pattern_id, week, weekday, starts_at, ends_at, break_minutes) values
+  ('50000000-0000-0000-0000-000000000001', 'A', 1, '08:00', '18:00', 60);
+insert into wage_months (month) values ('2026-12-01');
+insert into wage_rows (id, month, employee_id, contracted) values
+  ('60000000-0000-0000-0000-000000000001', '2026-12-01', '10000000-0000-0000-0000-000000000001', '{"2026-12-07": 540}');
+insert into wage_entries (row_id, kind, date) values ('60000000-0000-0000-0000-000000000001', 'holiday', '2026-12-07');
+insert into wage_closure_days (month, date) values ('2026-12-01', '2026-12-24');
+update wage_rows set extra_minutes = 25;
+update wage_months set status = 'finalised';
+select pg_temp.expect((select status from wage_months), 'open', 'manager cannot finalise a month');
+do $$ begin
+  insert into wage_months (month, status) values ('2027-01-01', 'finalised');
+  raise exception 'FAIL: manager started a finalised month';
+exception when insufficient_privilege then null;
+end $$;
+select pg_temp.sign_out();
+
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a', 'aal2');
+update wage_months set status = 'finalised', finalised_by_name = 'Owner';
+select pg_temp.sign_out();
+
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b', 'aal2');
+select pg_temp.expect((select count(*) from wage_rows), 1::bigint, 'manager reads a finalised month');
+update wage_rows set extra_minutes = 99;
+do $$ begin
+  insert into wage_entries (row_id, kind, minutes) values ('60000000-0000-0000-0000-000000000001', 'sick_hours', 30);
+  raise exception 'FAIL: manager added sickness to a finalised month';
+exception when insufficient_privilege then null;
+end $$;
+delete from wage_closure_days;
+select pg_temp.sign_out();
+select pg_temp.expect((select extra_minutes from wage_rows), 25, 'a finalised month is locked');
+select pg_temp.expect((select count(*) from wage_closure_days), 1::bigint, 'closure days locked once finalised');
+
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a', 'aal2');
+update wage_months set status = 'archived';
+do $$ begin
+  update wage_months set status = 'open';
+  raise exception 'FAIL: archived month reopened';
+exception when raise_exception then
+  if sqlerrm like 'FAIL%' then raise; end if;
+end $$;
+select pg_temp.sign_out();
+
+do $$ begin
+  insert into shift_pattern_days (pattern_id, week, weekday, starts_at, ends_at, break_minutes) values
+    ('50000000-0000-0000-0000-000000000001', 'A', 2, '09:00', '10:00', 60);
+  raise exception 'FAIL: break as long as the shift stored';
+exception when check_violation then null;
+end $$;
+do $$ begin
+  insert into wage_entries (row_id, kind, date) values ('60000000-0000-0000-0000-000000000001', 'sick_day', '2026-12-07');
+  raise exception 'FAIL: a day marked both holiday and sick';
+exception when unique_violation then null;
+end $$;
+
 -- Constraints -----------------------------------------------------------------
 do $$ begin
   insert into employees (first_name, last_name, email, ni_number) values ('Bad', 'NI', 'bad@example.com', 'AB123');
@@ -173,6 +233,11 @@ end $$;
 do $$ begin
   perform count(*) from children;
   raise exception 'FAIL: anon read children';
+exception when insufficient_privilege then null;
+end $$;
+do $$ begin
+  perform count(*) from wage_rows;
+  raise exception 'FAIL: anon read wage rows';
 exception when insufficient_privilege then null;
 end $$;
 reset role;

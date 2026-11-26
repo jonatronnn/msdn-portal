@@ -20,6 +20,7 @@ import {
 } from "@/lib/staff";
 import { removeFile, storePdf } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
+import { refreshOpenMonthsFor } from "@/lib/wages-server";
 
 function number(formData: FormData, key: string) {
   const value = text(formData, key)?.replace(/[£,\s]/g, "");
@@ -156,11 +157,12 @@ export async function updateEmployee(id: string, _: ActionState, formData: FormD
   const { error } = await supabase.from("employees").update({ ...employment, ...personal }).eq("id", id);
   if (error) return failed(error);
   await checkRecordAutomations(supabase, id, actorName(session));
+  await refreshOpenMonthsFor(supabase, id, actorName(session));
   redirect(`/staff/${id}`);
 }
 
 export async function endEmployment(id: string, _: ActionState, formData: FormData): Promise<ActionState> {
-  await requireSession();
+  const session = await requireSession();
   const leaveDate = text(formData, "leave_date");
   const leaveReason = text(formData, "leave_reason");
   if (!leaveDate || !leaveReason) return { error: "Enter the leave date and reason." };
@@ -170,14 +172,16 @@ export async function endEmployment(id: string, _: ActionState, formData: FormDa
   if (e?.start_date && leaveDate < e.start_date) return { error: "The leave date is before the start date." };
   const { error } = await supabase.from("employees").update({ leave_date: leaveDate, leave_reason: leaveReason }).eq("id", id);
   if (error) return failed(error);
+  await refreshOpenMonthsFor(supabase, id, actorName(session));
   revalidatePath(`/staff/${id}`);
   return { message: "Employment ended." };
 }
 
 export async function reinstateEmployee(id: string) {
-  await requireSession();
+  const session = await requireSession();
   const supabase = await createClient();
   await supabase.from("employees").update({ leave_date: null, leave_reason: null }).eq("id", id);
+  await refreshOpenMonthsFor(supabase, id, actorName(session));
   revalidatePath(`/staff/${id}`);
 }
 

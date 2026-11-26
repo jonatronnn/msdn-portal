@@ -19,6 +19,8 @@ in their details through a one-off emailed link.
 | Training types and new starter checklist | Edit | — |
 | New children (starter checklists) | ✔ | ✔ |
 | Children's checklist template | Edit | View |
+| Monthly wages (record hours, sickness, holiday) | ✔ | ✔ |
+| Finalise, reopen, archive or delete a wages month | ✔ | — |
 | Users (invite, roles, deactivate, reset 2FA) | ✔ | — |
 
 These rules are enforced **in the database** (Postgres row-level security), not
@@ -72,6 +74,31 @@ storage and are only handed out as one-minute links.
   and when, and every step has a notes box. The list shows how far each child
   has got and the next step due. Admins edit the standard steps. Famly still
   holds the child's full registration details.
+
+## What's in the Wages module
+
+- **Shift patterns** – each staff record has a shift pattern: the days worked,
+  start and finish times, and whether an unpaid break is taken and how long.
+  Tick "Has a second pattern" for alternating weeks (week A / week B). Each
+  pattern applies from a date, so a change part-way through a month is used
+  from that day.
+- **Monthly wages** – months are grouped by year, with a tab for each month.
+  Starting a month adds everyone employed during it, with contracted hours for
+  each working day from their shift patterns (only from the start date and up to
+  the leave date; the row notes when someone started or left that month).
+  Managers then record extra minutes worked (+/− in 5-minute steps), part-day
+  sickness (hours and minutes), full sick days and holiday days (by date), and
+  overtime. Bank holidays (England and Wales, listed in `src/lib/wages.ts`)
+  count as holiday hours automatically. **Closure days**, such as between
+  Christmas and New Year, are added to the month, and each person's are taken
+  as holiday or unpaid.
+- **For QuickBooks** – each person's hours worked, holiday hours, SSP days
+  (with dates) and overtime, on the page and as a CSV download. Hours worked =
+  contracted hours + extra minutes − sick hours − hours on sick days, holiday
+  days, bank holidays and closure days.
+- **Finalise and archive** – the owner finalises the month, which locks it, and
+  archives it once payroll has run. A finalised month can be reopened; an
+  archived one can't be changed.
 
 ## Running it locally
 

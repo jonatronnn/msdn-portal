@@ -9,6 +9,7 @@ import { env } from "@/lib/env";
 import { type BankDetails, formatAddress, formatNiNumber, formatPay, formatSortCode, fullName, missingEmploymentDetails } from "@/lib/staff";
 import { MAX_FILE_MB } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
+import type { ShiftDay } from "@/lib/wages";
 import {
   addTask,
   addTraining,
@@ -23,6 +24,7 @@ import {
   uploadContract,
 } from "../actions";
 import { FamlyCard } from "../famly-card";
+import { ShiftPatternCard } from "../shift-pattern-card";
 
 // Training expiring within this many days is flagged.
 const EXPIRY_WARNING_DAYS = 60;
@@ -41,7 +43,7 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
   const { data: e } = await supabase.from("employees").select("*").eq("id", id).maybeSingle();
   if (!e) notFound();
 
-  const [{ data: links }, { data: training }, { data: trainingTypes }, { data: contracts }, { data: tasks }, { data: bank }] =
+  const [{ data: links }, { data: training }, { data: trainingTypes }, { data: contracts }, { data: tasks }, { data: bank }, { data: patterns }] =
     await Promise.all([
       supabase.from("starter_form_links").select("*").eq("employee_id", id).order("sent_at", { ascending: false }).limit(1),
       supabase
@@ -55,6 +57,7 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
       owner
         ? supabase.from("employee_bank_details").select("*").eq("employee_id", id).maybeSingle()
         : Promise.resolve({ data: null }),
+      supabase.from("shift_patterns").select("id, effective_from, week_a_from, created_by_name, shift_pattern_days(*)").eq("employee_id", id),
     ]);
 
   const current = isCurrentEmployee(e, today);
@@ -151,6 +154,12 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
           ]}
         />
       </Card>
+
+      <ShiftPatternCard
+        employeeId={id}
+        patterns={(patterns ?? []).map(({ shift_pattern_days, ...p }) => ({ ...p, days: shift_pattern_days as ShiftDay[] }))}
+        today={today}
+      />
 
       <Card title="Personal details">
         <DetailList

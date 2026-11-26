@@ -211,6 +211,46 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"shift_pattern_days": {
+                  Row: {
+                    "break_minutes": number | null,"ends_at": string,"pattern_id": string,"starts_at": string,"week": string,"weekday": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "break_minutes"?: number | null,"ends_at": string,"pattern_id": string,"starts_at": string,"week": string,"weekday": number
+                  }
+                  Update: {
+                    "break_minutes"?: number | null,"ends_at"?: string,"pattern_id"?: string,"starts_at"?: string,"week"?: string,"weekday"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shift_pattern_days_pattern_id_fkey"
+      columns: ["pattern_id"]
+isOneToOne: false
+      referencedRelation: "shift_patterns"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"shift_patterns": {
+                  Row: {
+                    "created_at": string,"created_by_name": string | null,"effective_from": string,"employee_id": string,"id": string,"week_a_from": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by_name"?: string | null,"effective_from": string,"employee_id": string,"id"?: string,"week_a_from"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by_name"?: string | null,"effective_from"?: string,"employee_id"?: string,"id"?: string,"week_a_from"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shift_patterns_employee_id_fkey"
+      columns: ["employee_id"]
+isOneToOne: false
+      referencedRelation: "employees"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"starter_form_links": {
                   Row: {
                     "employee_id": string,"expires_at": string,"id": string,"revoked_at": string | null,"sent_at": string,"sent_by_name": string | null,"sent_to": string,"token_hash": string,"used_at": string | null
@@ -245,6 +285,86 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"wage_closure_days": {
+                  Row: {
+                    "date": string,"month": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "date": string,"month": string
+                  }
+                  Update: {
+                    "date"?: string,"month"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "wage_closure_days_month_fkey"
+      columns: ["month"]
+isOneToOne: false
+      referencedRelation: "wage_months"
+      referencedColumns: ["month"]
+    }
+                  ]
+                },"wage_entries": {
+                  Row: {
+                    "created_at": string,"created_by_name": string | null,"date": string | null,"id": string,"kind": string,"minutes": number | null,"row_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by_name"?: string | null,"date"?: string | null,"id"?: string,"kind": string,"minutes"?: number | null,"row_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by_name"?: string | null,"date"?: string | null,"id"?: string,"kind"?: string,"minutes"?: number | null,"row_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "wage_entries_row_id_fkey"
+      columns: ["row_id"]
+isOneToOne: false
+      referencedRelation: "wage_rows"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"wage_months": {
+                  Row: {
+                    "archived_at": string | null,"archived_by_name": string | null,"created_at": string,"finalised_at": string | null,"finalised_by_name": string | null,"month": string,"started_by_name": string | null,"status": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "archived_at"?: string | null,"archived_by_name"?: string | null,"created_at"?: string,"finalised_at"?: string | null,"finalised_by_name"?: string | null,"month": string,"started_by_name"?: string | null,"status"?: string
+                  }
+                  Update: {
+                    "archived_at"?: string | null,"archived_by_name"?: string | null,"created_at"?: string,"finalised_at"?: string | null,"finalised_by_name"?: string | null,"month"?: string,"started_by_name"?: string | null,"status"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"wage_rows": {
+                  Row: {
+                    "closure_as_holiday": boolean | null,"contracted": NonNullable<Json>,"employee_id": string,"extra_minutes": number,"id": string,"month": string,"overtime_minutes": number,"updated_at": string | null,"updated_by_name": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "closure_as_holiday"?: boolean | null,"contracted"?: NonNullable<Json>,"employee_id": string,"extra_minutes"?: number,"id"?: string,"month": string,"overtime_minutes"?: number,"updated_at"?: string | null,"updated_by_name"?: string | null
+                  }
+                  Update: {
+                    "closure_as_holiday"?: boolean | null,"contracted"?: NonNullable<Json>,"employee_id"?: string,"extra_minutes"?: number,"id"?: string,"month"?: string,"overtime_minutes"?: number,"updated_at"?: string | null,"updated_by_name"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "wage_rows_employee_id_fkey"
+      columns: ["employee_id"]
+isOneToOne: false
+      referencedRelation: "employees"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "wage_rows_month_fkey"
+      columns: ["month"]
+isOneToOne: false
+      referencedRelation: "wage_months"
+      referencedColumns: ["month"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -262,6 +382,9 @@ isOneToOne: false
                            },
 "is_manager_or_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"wage_month_open":
+{ Args: { "p_month": string }; Returns: boolean
                            }
           }
           Enums: {
