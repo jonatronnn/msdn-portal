@@ -20,15 +20,12 @@ export const modules: Module[] = [
     items: [
       { href: "/staff", label: "Staff directory", icon: "users", roles: managers },
       { href: "/onboarding", label: "Onboarding", icon: "clipboard", roles: managers },
+      { href: "/wages", label: "Wages", icon: "clock", roles: managers },
     ],
   },
   {
     name: "Children",
     items: [{ href: "/children", label: "New children", icon: "star", roles: managers }],
-  },
-  {
-    name: "Wages",
-    items: [{ href: "/wages", label: "Monthly wages", icon: "clock", roles: managers }],
   },
   {
     name: "Admin",

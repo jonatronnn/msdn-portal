@@ -42,7 +42,7 @@ export default async function WageMonthPage({ params }: PageProps<"/wages/[month
 
   return (
     <>
-      <PageHeader title="Monthly wages" />
+      <PageHeader title="Wages" />
 
       <div className="mb-4 flex items-center gap-3">
         <Link href={`/wages/${year - 1}-${monthNumber}`} className="text-sm text-brand-700 hover:underline" aria-label="Previous year">
