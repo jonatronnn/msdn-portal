@@ -277,7 +277,6 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
       </Card>
 
       <Card title="Medical information">
-        <p className="mb-4 text-xs text-stone-500">Seen by owners and managers only. Never sent to Famly. Changed on Edit details.</p>
         <DetailList
           items={[
             ["Doctor", medical && [medical.doctor_name, medical.doctor_phone, medical.doctor_address].filter(Boolean).join(", ")],
@@ -289,7 +288,6 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
       </Card>
 
       <Card title="Passport and driving licence">
-        <p className="mb-4 text-xs text-stone-500">Seen by owners and managers only, and stored encrypted.</p>
         {idRow && !idNumbers && <p className="mb-4 text-sm text-red-700">These numbers can&apos;t be read. Check BANK_DETAILS_KEY.</p>}
         {idNumbers && idRow ? (
           <div className="mb-4">
@@ -381,7 +379,7 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
         <p className="mt-2 text-xs text-stone-500">Leave Expires blank to work it out from the course length.</p>
       </Card>
 
-      <Card title="Contract">
+      <Card title="Signed documents">
         {contracts?.length ? (
           <ul className="mb-6 divide-y divide-stone-100 text-sm">
             {contracts.map((c) => (
@@ -403,12 +401,12 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
           </ul>
         ) : (
           <div className="mb-6">
-            <Empty>No signed contract uploaded.</Empty>
+            <Empty>No signed documents uploaded.</Empty>
           </div>
         )}
         <ActionForm
           action={uploadContract.bind(null, id)}
-          submitLabel="Upload signed contract"
+          submitLabel="Upload"
           variant="secondary"
           className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
         >
