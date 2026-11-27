@@ -28,6 +28,10 @@ export const modules: Module[] = [
     items: [{ href: "/children", label: "New children", icon: "star", roles: managers }],
   },
   {
+    name: "Tools",
+    items: [{ href: "/signature", label: "Email signature", icon: "mail", roles: managers }],
+  },
+  {
     name: "Admin",
     items: [
       { href: "/admin/users", label: "Users", icon: "key", roles: owner },
