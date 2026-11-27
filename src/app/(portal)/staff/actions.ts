@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { failed, text, type ActionState } from "@/lib/action-state";
+import type { Database } from "@/lib/database.types";
 import { actorName, requireSession } from "@/lib/auth";
 import { encryptJson } from "@/lib/crypto";
 import { addMonths, todayInLondon } from "@/lib/dates";
@@ -27,6 +28,7 @@ import {
   normaliseAccountNumber,
   normaliseNiNumber,
   normaliseSortCode,
+  nextPayrollId,
   QUALIFICATION_LEVELS,
 } from "@/lib/staff";
 import { removeFile, storePdf } from "@/lib/storage";
@@ -118,6 +120,26 @@ async function addChecklist(supabase: Awaited<ReturnType<typeof createClient>>, 
   await checkRecordAutomations(supabase, employeeId, by);
 }
 
+async function newPayrollId(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data } = await supabase.from("employees").select("payroll_id").not("payroll_id", "is", null);
+  return nextPayrollId((data ?? []).map((e) => e.payroll_id));
+}
+
+// Inserts a new employee. New starters get the next employee / payroll ID,
+// trying again if someone else took that number at the same moment.
+async function insertEmployee(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  fields: Database["public"]["Tables"]["employees"]["Insert"],
+  newStarter: boolean,
+) {
+  for (let attempt = 0; ; attempt++) {
+    const row = newStarter && !fields.payroll_id ? { ...fields, payroll_id: await newPayrollId(supabase) } : fields;
+    const result = await supabase.from("employees").insert(row).select("id, first_name, email").single();
+    const clash = result.error?.code === "23505" && result.error.message.includes("payroll_id");
+    if (!clash || row === fields || attempt === 2) return result;
+  }
+}
+
 async function createEmployee(
   formData: FormData,
   fields: Partial<ReturnType<typeof employmentFields>> & { first_name: string; last_name: string; email: string },
@@ -126,7 +148,7 @@ async function createEmployee(
   const session = await requireSession();
   const by = actorName(session);
   const supabase = await createClient();
-  const { data, error } = await supabase.from("employees").insert(fields).select("id, first_name, email").single();
+  const { data, error } = await insertEmployee(supabase, fields, withChecklist);
   if (error) return failed(error);
 
   if (withChecklist) await addChecklist(supabase, data.id, by);
@@ -493,11 +515,7 @@ export async function importFromFamly(_: ActionState, formData: FormData): Promi
       employeeId = match.id;
       linked++;
     } else {
-      const { data, error } = await supabase
-        .from("employees")
-        .insert({ ...fields, famly_synced_at: new Date().toISOString() })
-        .select("id")
-        .single();
+      const { data, error } = await insertEmployee(supabase, { ...fields, famly_synced_at: new Date().toISOString() }, withChecklist);
       if (error || !data) {
         console.error(error);
         skipped.push(fields.first_name);

@@ -86,7 +86,7 @@ export function EmploymentFields({ employee = {} }: { employee?: Employee }) {
         <Field label="Qualification date">
           <Input name="qualification_date" type="date" defaultValue={v(employee.qualification_date)} />
         </Field>
-        <Field label="Payroll reference number" hint="Added by the owner or a manager once they're on payroll.">
+        <Field label="Employee / payroll ID" hint="Their employee number, also used as their payroll ID in QuickBooks.">
           <Input name="payroll_id" defaultValue={v(employee.payroll_id)} />
         </Field>
       </fieldset>

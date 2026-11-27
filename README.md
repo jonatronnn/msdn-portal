@@ -40,9 +40,9 @@ storage and are only handed out as one-minute links.
   employee gives on their form (name, nickname, gender, date of birth,
   nationality, place of birth, mobile and home phone, home address, emergency
   contact, NI number, passport and driving licence numbers, medical details,
-  bank details, additional information) and the payroll reference added
-  afterwards. Bank details are owner-only; ID numbers and medical details are
-  for owners and managers. Bank details and ID numbers are encrypted.
+  bank details, additional information) and their employee / payroll ID.
+  Bank details are owner-only; ID numbers and medical details are for owners
+  and managers. Bank details and ID numbers are encrypted.
   The record lists anything still to add. Employment is ended from the record
   (leave date and reason), which moves them to the archive after that date.
 - **Training** – first aid, safeguarding, FGM awareness and so on, with
@@ -55,8 +55,10 @@ storage and are only handed out as one-minute links.
   form** (a one-off link, valid for 14 days). What they submit goes straight into
   their record. Checklist steps record who ticked them and when; these tick
   themselves: form sent, form returned, employment details completed, signed
-  contract uploaded, and payroll reference added. If email isn't set up, the
-  manager is shown the link to send another way.
+  contract uploaded. New starters (including Famly imports marked as new
+  starters) get the next employee / payroll ID automatically: PR070, PR071
+  and so on. If email isn't set up, the manager is shown the link to send
+  another way.
 - **Famly** – *Import from Famly* lists Famly staff who aren't in the portal yet;
   tick who to bring across (optionally as new starters, with the checklist).
   Anyone already in the portal with the same email is linked, not duplicated.
