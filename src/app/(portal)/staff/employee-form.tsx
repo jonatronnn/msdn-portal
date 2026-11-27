@@ -1,6 +1,6 @@
-import { Field, Input, Select } from "@/components/ui";
+import { Field, Input, Select, Textarea } from "@/components/ui";
 import type { Database } from "@/lib/database.types";
-import { CONTRACT_TYPES, formatNiNumber, QUALIFICATION_LEVELS } from "@/lib/staff";
+import { BLOOD_TYPES, CONTRACT_TYPES, countryNames, formatNiNumber, GENDERS, type MedicalDetails, QUALIFICATION_LEVELS } from "@/lib/staff";
 
 type Employee = Partial<Database["public"]["Tables"]["employees"]["Row"]>;
 
@@ -14,6 +14,9 @@ export function EmploymentFields({ employee = {} }: { employee?: Employee }) {
         <legend className="mb-2 font-semibold">Name and email</legend>
         <Field label="First name *">
           <Input name="first_name" defaultValue={v(employee.first_name)} required />
+        </Field>
+        <Field label="Middle name">
+          <Input name="middle_name" defaultValue={v(employee.middle_name)} />
         </Field>
         <Field label="Last name *">
           <Input name="last_name" defaultValue={v(employee.last_name)} required />
@@ -101,12 +104,27 @@ export function PersonalFields({ employee = {} }: { employee?: Employee }) {
         <Field label="Date of birth">
           <Input name="date_of_birth" type="date" defaultValue={v(employee.date_of_birth)} />
         </Field>
+        <Field label="Gender">
+          <Select name="gender" defaultValue={v(employee.gender)}>
+            <option value="">Not specified</option>
+            {GENDERS.map((g) => (
+              <option key={g}>{g}</option>
+            ))}
+          </Select>
+        </Field>
         <Field label="Mobile number">
           <Input name="mobile_phone" type="tel" defaultValue={v(employee.mobile_phone)} />
+        </Field>
+        <Field label="Home phone">
+          <Input name="home_phone" type="tel" defaultValue={v(employee.home_phone)} />
         </Field>
         <Field label="National Insurance number">
           <Input name="ni_number" defaultValue={formatNiNumber(employee.ni_number ?? null)} placeholder="AB 12 34 56 C" />
         </Field>
+        <Field label="Nickname">
+          <Input name="nickname" defaultValue={v(employee.nickname)} />
+        </Field>
+        <BirthplaceFields employee={employee} />
       </fieldset>
 
       <fieldset className="grid gap-4 sm:grid-cols-2">
@@ -136,7 +154,68 @@ export function PersonalFields({ employee = {} }: { employee?: Employee }) {
         <Field label="Phone">
           <Input name="emergency_contact_phone" type="tel" defaultValue={v(employee.emergency_contact_phone)} />
         </Field>
+        <div className="sm:col-span-3">
+          <Field label="Address">
+            <Input name="emergency_contact_address" defaultValue={v(employee.emergency_contact_address)} />
+          </Field>
+        </div>
       </fieldset>
+
+      <Field label="Special notes" hint="Kept in the portal only: Famly has no place for staff notes.">
+        <Textarea name="special_notes" rows={3} defaultValue={v(employee.special_notes)} />
+      </Field>
     </div>
+  );
+}
+
+// Nationality and place of birth, with country suggestions.
+export function BirthplaceFields({ employee = {} }: { employee?: Employee }) {
+  return (
+    <>
+      <Field label="Nationality">
+        <Input name="nationality" defaultValue={v(employee.nationality)} />
+      </Field>
+      <Field label="Place of birth (country/region)">
+        <Input name="place_of_birth" list="countries" defaultValue={v(employee.place_of_birth)} />
+      </Field>
+      <datalist id="countries">
+        {countryNames().map((c) => (
+          <option key={c} value={c} />
+        ))}
+      </datalist>
+    </>
+  );
+}
+
+// Medical details: seen by owners and managers only, never sent to Famly.
+export function MedicalFields({ medical }: { medical?: Partial<MedicalDetails> | null }) {
+  const m = medical ?? {};
+  return (
+    <fieldset className="grid gap-4 sm:grid-cols-2">
+      <legend className="mb-2 font-semibold">Medical information</legend>
+      <Field label="Doctor's name">
+        <Input name="doctor_name" defaultValue={v(m.doctor_name)} />
+      </Field>
+      <Field label="Doctor's phone number">
+        <Input name="doctor_phone" type="tel" defaultValue={v(m.doctor_phone)} />
+      </Field>
+      <Field label="Doctor's surgery address">
+        <Input name="doctor_address" defaultValue={v(m.doctor_address)} />
+      </Field>
+      <Field label="Blood type">
+        <Select name="blood_type" defaultValue={v(m.blood_type)}>
+          <option value="">Not recorded</option>
+          {BLOOD_TYPES.map((b) => (
+            <option key={b}>{b}</option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="Medical conditions">
+        <Textarea name="medical_conditions" rows={2} defaultValue={v(m.medical_conditions)} />
+      </Field>
+      <Field label="Allergies">
+        <Textarea name="allergies" rows={2} defaultValue={v(m.allergies)} />
+      </Field>
+    </fieldset>
   );
 }

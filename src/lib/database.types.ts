@@ -117,6 +117,46 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"employee_id_numbers": {
+                  Row: {
+                    "employee_id": string,"encrypted": string,"updated_at": string,"updated_by_name": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "employee_id": string,"encrypted": string,"updated_at"?: string,"updated_by_name"?: string | null
+                  }
+                  Update: {
+                    "employee_id"?: string,"encrypted"?: string,"updated_at"?: string,"updated_by_name"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "employee_id_numbers_employee_id_fkey"
+      columns: ["employee_id"]
+isOneToOne: true
+      referencedRelation: "employees"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"employee_medical": {
+                  Row: {
+                    "allergies": string | null,"blood_type": string | null,"doctor_address": string | null,"doctor_name": string | null,"doctor_phone": string | null,"employee_id": string,"medical_conditions": string | null,"updated_at": string,"updated_by_name": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "allergies"?: string | null,"blood_type"?: string | null,"doctor_address"?: string | null,"doctor_name"?: string | null,"doctor_phone"?: string | null,"employee_id": string,"medical_conditions"?: string | null,"updated_at"?: string,"updated_by_name"?: string | null
+                  }
+                  Update: {
+                    "allergies"?: string | null,"blood_type"?: string | null,"doctor_address"?: string | null,"doctor_name"?: string | null,"doctor_phone"?: string | null,"employee_id"?: string,"medical_conditions"?: string | null,"updated_at"?: string,"updated_by_name"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "employee_medical_employee_id_fkey"
+      columns: ["employee_id"]
+isOneToOne: true
+      referencedRelation: "employees"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"employee_training": {
                   Row: {
                     "completed_on": string | null,"created_at": string,"employee_id": string,"expires_on": string | null,"id": string,"recorded_by_name": string | null,"training_type_id": string
@@ -145,14 +185,14 @@ isOneToOne: false
                   ]
                 },"employees": {
                   Row: {
-                    "address_line1": string | null,"address_line2": string | null,"bank_details_received_at": string | null,"contract_end_date": string | null,"contract_type": string | null,"contracted_hours": number | null,"created_at": string,"date_of_birth": string | null,"email": string,"emergency_contact_name": string | null,"emergency_contact_phone": string | null,"emergency_contact_relationship": string | null,"famly_group_id": string | null,"famly_id": string | null,"famly_synced_at": string | null,"first_name": string,"id": string,"info_form_submitted_at": string | null,"job_title": string | null,"last_name": string,"leave_date": string | null,"leave_reason": string | null,"mobile_phone": string | null,"ni_number": string | null,"notice_period": string | null,"pay_rate": number | null,"pay_rate_basis": string | null,"payroll_id": string | null,"postcode": string | null,"probation_end_date": string | null,"qualification_date": string | null,"qualification_level": string | null,"start_date": string | null,"town": string | null,"updated_at": string,"working_pattern": string | null
+                    "address_line1": string | null,"address_line2": string | null,"bank_details_received_at": string | null,"contract_end_date": string | null,"contract_type": string | null,"contracted_hours": number | null,"created_at": string,"date_of_birth": string | null,"email": string,"emergency_contact_name": string | null,"emergency_contact_phone": string | null,"emergency_contact_relationship": string | null,"famly_group_id": string | null,"famly_id": string | null,"famly_synced_at": string | null,"first_name": string,"gender": string | null,"id": string,"info_form_submitted_at": string | null,"job_title": string | null,"last_name": string,"leave_date": string | null,"leave_reason": string | null,"middle_name": string | null,"mobile_phone": string | null,"ni_number": string | null,"notice_period": string | null,"pay_rate": number | null,"pay_rate_basis": string | null,"payroll_id": string | null,"postcode": string | null,"probation_end_date": string | null,"qualification_date": string | null,"qualification_level": string | null,"special_notes": string | null,"start_date": string | null,"town": string | null,"updated_at": string,"working_pattern": string | null,"nickname": string | null,"nationality": string | null,"place_of_birth": string | null,"home_phone": string | null,"emergency_contact_address": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "address_line1"?: string | null,"address_line2"?: string | null,"bank_details_received_at"?: string | null,"contract_end_date"?: string | null,"contract_type"?: string | null,"contracted_hours"?: number | null,"created_at"?: string,"date_of_birth"?: string | null,"email": string,"emergency_contact_name"?: string | null,"emergency_contact_phone"?: string | null,"emergency_contact_relationship"?: string | null,"famly_group_id"?: string | null,"famly_id"?: string | null,"famly_synced_at"?: string | null,"first_name": string,"id"?: string,"info_form_submitted_at"?: string | null,"job_title"?: string | null,"last_name": string,"leave_date"?: string | null,"leave_reason"?: string | null,"mobile_phone"?: string | null,"ni_number"?: string | null,"notice_period"?: string | null,"pay_rate"?: number | null,"pay_rate_basis"?: string | null,"payroll_id"?: string | null,"postcode"?: string | null,"probation_end_date"?: string | null,"qualification_date"?: string | null,"qualification_level"?: string | null,"start_date"?: string | null,"town"?: string | null,"updated_at"?: string,"working_pattern"?: string | null
+                    "address_line1"?: string | null,"address_line2"?: string | null,"bank_details_received_at"?: string | null,"contract_end_date"?: string | null,"contract_type"?: string | null,"contracted_hours"?: number | null,"created_at"?: string,"date_of_birth"?: string | null,"email": string,"emergency_contact_name"?: string | null,"emergency_contact_phone"?: string | null,"emergency_contact_relationship"?: string | null,"famly_group_id"?: string | null,"famly_id"?: string | null,"famly_synced_at"?: string | null,"first_name": string,"gender"?: string | null,"id"?: string,"info_form_submitted_at"?: string | null,"job_title"?: string | null,"last_name": string,"leave_date"?: string | null,"leave_reason"?: string | null,"middle_name"?: string | null,"mobile_phone"?: string | null,"ni_number"?: string | null,"notice_period"?: string | null,"pay_rate"?: number | null,"pay_rate_basis"?: string | null,"payroll_id"?: string | null,"postcode"?: string | null,"probation_end_date"?: string | null,"qualification_date"?: string | null,"qualification_level"?: string | null,"special_notes"?: string | null,"start_date"?: string | null,"town"?: string | null,"updated_at"?: string,"working_pattern"?: string | null,"nickname"?: string | null,"nationality"?: string | null,"place_of_birth"?: string | null,"home_phone"?: string | null,"emergency_contact_address"?: string | null
                   }
                   Update: {
-                    "address_line1"?: string | null,"address_line2"?: string | null,"bank_details_received_at"?: string | null,"contract_end_date"?: string | null,"contract_type"?: string | null,"contracted_hours"?: number | null,"created_at"?: string,"date_of_birth"?: string | null,"email"?: string,"emergency_contact_name"?: string | null,"emergency_contact_phone"?: string | null,"emergency_contact_relationship"?: string | null,"famly_group_id"?: string | null,"famly_id"?: string | null,"famly_synced_at"?: string | null,"first_name"?: string,"id"?: string,"info_form_submitted_at"?: string | null,"job_title"?: string | null,"last_name"?: string,"leave_date"?: string | null,"leave_reason"?: string | null,"mobile_phone"?: string | null,"ni_number"?: string | null,"notice_period"?: string | null,"pay_rate"?: number | null,"pay_rate_basis"?: string | null,"payroll_id"?: string | null,"postcode"?: string | null,"probation_end_date"?: string | null,"qualification_date"?: string | null,"qualification_level"?: string | null,"start_date"?: string | null,"town"?: string | null,"updated_at"?: string,"working_pattern"?: string | null
+                    "address_line1"?: string | null,"address_line2"?: string | null,"bank_details_received_at"?: string | null,"contract_end_date"?: string | null,"contract_type"?: string | null,"contracted_hours"?: number | null,"created_at"?: string,"date_of_birth"?: string | null,"email"?: string,"emergency_contact_name"?: string | null,"emergency_contact_phone"?: string | null,"emergency_contact_relationship"?: string | null,"famly_group_id"?: string | null,"famly_id"?: string | null,"famly_synced_at"?: string | null,"first_name"?: string,"gender"?: string | null,"id"?: string,"info_form_submitted_at"?: string | null,"job_title"?: string | null,"last_name"?: string,"leave_date"?: string | null,"leave_reason"?: string | null,"middle_name"?: string | null,"mobile_phone"?: string | null,"ni_number"?: string | null,"notice_period"?: string | null,"pay_rate"?: number | null,"pay_rate_basis"?: string | null,"payroll_id"?: string | null,"postcode"?: string | null,"probation_end_date"?: string | null,"qualification_date"?: string | null,"qualification_level"?: string | null,"special_notes"?: string | null,"start_date"?: string | null,"town"?: string | null,"updated_at"?: string,"working_pattern"?: string | null,"nickname"?: string | null,"nationality"?: string | null,"place_of_birth"?: string | null,"home_phone"?: string | null,"emergency_contact_address"?: string | null
                   }
                   Relationships: [
                     

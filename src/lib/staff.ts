@@ -1,5 +1,35 @@
 export const QUALIFICATION_LEVELS = ["Unqualified", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7"];
 
+// Blank means not specified.
+export const GENDERS = ["Male", "Female", "Non-binary"];
+
+export const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Don't know"];
+
+// Countries and regions, for suggesting a place of birth.
+const REGION_CODES = "AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW".split(" ");
+export function countryNames() {
+  const names = new Intl.DisplayNames(["en-GB"], { type: "region" });
+  return REGION_CODES.map((c) => names.of(c) ?? c).sort((a, b) => a.localeCompare(b));
+}
+
+const BLANK_MEDICAL = { doctor_name: null, doctor_address: null, doctor_phone: null, blood_type: null, medical_conditions: null, allergies: null };
+export type MedicalDetails = { [K in keyof typeof BLANK_MEDICAL]: string | null };
+
+// The medical section, as filled in on the starter form or the edit page.
+export function medicalFields(formData: FormData): MedicalDetails {
+  const get = (k: string) => String(formData.get(k) ?? "").trim() || null;
+  const fields = Object.fromEntries(Object.keys(BLANK_MEDICAL).map((k) => [k, get(k)])) as MedicalDetails;
+  if (fields.blood_type && !BLOOD_TYPES.includes(fields.blood_type)) fields.blood_type = null;
+  return fields;
+}
+
+export type IdNumbers = { passportNumber: string | null; drivingLicenceNumber: string | null };
+
+// Passport and licence numbers are stored without spaces, in capitals.
+export function normaliseIdNumber(value: string | null) {
+  return value ? value.replace(/\s+/g, "").toUpperCase() : null;
+}
+
 export function fullName(e: { first_name: string; last_name: string }) {
   return `${e.first_name} ${e.last_name}`;
 }

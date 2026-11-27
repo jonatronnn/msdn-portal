@@ -5,7 +5,7 @@ import { requireSession } from "@/lib/auth";
 import { fullName } from "@/lib/staff";
 import { createClient } from "@/lib/supabase/server";
 import { updateEmployee } from "../../actions";
-import { EmploymentFields, PersonalFields } from "../../employee-form";
+import { EmploymentFields, MedicalFields, PersonalFields } from "../../employee-form";
 
 export default async function EditEmployeePage({ params }: PageProps<"/staff/[id]/edit">) {
   await requireSession();
@@ -13,6 +13,7 @@ export default async function EditEmployeePage({ params }: PageProps<"/staff/[id
   const supabase = await createClient();
   const { data: employee } = await supabase.from("employees").select("*").eq("id", id).maybeSingle();
   if (!employee) notFound();
+  const { data: medical } = await supabase.from("employee_medical").select("*").eq("employee_id", id).maybeSingle();
 
   return (
     <>
@@ -23,8 +24,9 @@ export default async function EditEmployeePage({ params }: PageProps<"/staff/[id
         <ActionForm action={updateEmployee.bind(null, id)} submitLabel="Save changes" className="space-y-8">
           <EmploymentFields employee={employee} />
           <PersonalFields employee={employee} />
+          <MedicalFields medical={medical} />
           <p className="text-sm text-stone-500">
-            Bank details and the end of employment are changed on the staff member&apos;s page.
+            Bank details, passport and driving licence numbers, and the end of employment are changed on the staff member&apos;s page.
           </p>
         </ActionForm>
       </Card>

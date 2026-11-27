@@ -1,7 +1,7 @@
 import { ActionForm } from "@/components/action-form";
 import { Badge, Card, Empty, PageHeader, Table, Td } from "@/components/ui";
 import { requireSession } from "@/lib/auth";
-import { formatDate } from "@/lib/dates";
+import { formatDate, formatDateNumeric, todayInLondon } from "@/lib/dates";
 import { famlyConnected, listFamlyEmployees } from "@/lib/famly";
 import { fromFamly } from "@/lib/famly-mapping";
 import { createClient } from "@/lib/supabase/server";
@@ -42,7 +42,7 @@ export default async function ImportFromFamlyPage() {
   const portalEmails = new Set((portal ?? []).filter((e) => !e.famly_id).map((e) => e.email));
   const notInPortal = famlyStaff
     .filter((f) => !linkedIds.has(f.id))
-    .map((f) => ({ id: f.id, ...fromFamly(f) }))
+    .map((f) => ({ id: f.id, ...fromFamly(f, todayInLondon()) }))
     .sort((a, b) => a.last_name.localeCompare(b.last_name));
 
   return (
@@ -55,10 +55,10 @@ export default async function ImportFromFamlyPage() {
           <ActionForm action={importFromFamly} submitLabel="Import selected">
             <p className="text-sm text-stone-600">
               Current and future staff in Famly who aren&apos;t in the portal yet. Their name, email, job title, date of
-              birth, mobile, address and start date are copied across.
+              birth, gender, mobile, address, room, qualification level and start date are copied across.
             </p>
             <SelectAll name="famly_ids" />
-            <Table head={["", "Name", "Email", "Job title", "Start date", ""]}>
+            <Table head={["", "Name", "Email", "Job title", "Date of birth", "Start date", ""]}>
               {notInPortal.map((f) => (
                 <tr key={f.id}>
                   <Td>
@@ -72,10 +72,11 @@ export default async function ImportFromFamlyPage() {
                     />
                   </Td>
                   <Td className="font-medium">
-                    {f.first_name} {f.last_name}
+                    {[f.first_name, f.middle_name, f.last_name].filter(Boolean).join(" ")}
                   </Td>
                   <Td>{f.email || <span className="text-stone-400">None in Famly</span>}</Td>
                   <Td>{f.job_title}</Td>
+                  <Td className="whitespace-nowrap">{formatDateNumeric(f.date_of_birth)}</Td>
                   <Td className="whitespace-nowrap">{formatDate(f.start_date)}</Td>
                   <Td>
                     {!f.email ? (
