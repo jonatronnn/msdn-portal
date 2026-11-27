@@ -16,7 +16,7 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("employees")
-    .select("id, first_name, last_name, job_title, start_date, leave_date, leave_reason");
+    .select("id, payroll_id, first_name, last_name, job_title, start_date, leave_date, leave_reason");
   const employees = sortStaff(
     (data ?? []).filter((e) => isCurrentEmployee(e, today) !== archive),
     sort,
@@ -75,6 +75,7 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
         ) : archive ? (
           <Table
             head={[
+              heading("payroll_id", "Employee ID"),
               heading("name", "Name"),
               heading("job_title", "Job title"),
               heading("start_date", "Start date"),
@@ -85,6 +86,7 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
           >
             {employees.map((e) => (
               <tr key={e.id}>
+                <Td className="whitespace-nowrap">{e.payroll_id}</Td>
                 <Td>
                   <Link href={`/staff/${e.id}`} className="font-medium text-brand-800 hover:underline">
                     {fullName(e)}
@@ -101,6 +103,7 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
         ) : (
           <Table
             head={[
+              heading("payroll_id", "Employee ID"),
               heading("name", "Name"),
               heading("job_title", "Job title"),
               heading("start_date", "Start date"),
@@ -113,6 +116,7 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
               const milestone = e.start_date ? nextMilestone(e.start_date, today) : null;
               return (
                 <tr key={e.id}>
+                  <Td className="whitespace-nowrap">{e.payroll_id}</Td>
                   <Td>
                     <Link href={`/staff/${e.id}`} className="font-medium text-brand-800 hover:underline">
                       {fullName(e)}
