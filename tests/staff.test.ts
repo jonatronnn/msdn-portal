@@ -7,6 +7,7 @@ import {
   normaliseAccountNumber,
   normaliseNiNumber,
   normaliseSortCode,
+  sortStaff,
 } from "@/lib/staff";
 
 describe("normaliseNiNumber", () => {
@@ -81,5 +82,40 @@ describe("bank details", () => {
     expect(formatPay(12.6, "hourly")).toBe("£12.60 per hour");
     expect(formatPay(28000, "annual")).toBe("£28,000.00 per year");
     expect(formatPay(null, "hourly")).toBe("");
+  });
+});
+
+describe("sortStaff", () => {
+  const today = "2026-11-27";
+  const row = (first_name: string, last_name: string, job_title: string | null, start_date: string | null) => ({
+    first_name,
+    last_name,
+    job_title,
+    start_date,
+    leave_date: null,
+    leave_reason: null,
+  });
+  const rows = [
+    row("Amy", "Smith", "Room leader", "2020-03-01"),
+    row("Ben", "adams", null, "2025-06-15"),
+    row("Cat", "Smith", "Apprentice", null),
+  ];
+  const names = (r: typeof rows) => r.map((e) => e.first_name);
+
+  it("sorts by surname then first name, ignoring case", () => {
+    expect(names(sortStaff(rows, "name", "asc", today))).toEqual(["Ben", "Amy", "Cat"]);
+    expect(names(sortStaff(rows, "name", "desc", today))).toEqual(["Cat", "Amy", "Ben"]);
+  });
+
+  it("puts blanks last in either direction", () => {
+    expect(names(sortStaff(rows, "job_title", "asc", today))).toEqual(["Cat", "Amy", "Ben"]);
+    expect(names(sortStaff(rows, "job_title", "desc", today))).toEqual(["Amy", "Cat", "Ben"]);
+    expect(names(sortStaff(rows, "start_date", "desc", today))).toEqual(["Ben", "Amy", "Cat"]);
+  });
+
+  it("sorts by length of service and next anniversary", () => {
+    expect(names(sortStaff(rows, "service", "asc", today))).toEqual(["Ben", "Amy", "Cat"]);
+    // Amy's 10 years falls on 1 Mar 2030, Ben's 5 years on 15 Jun 2030.
+    expect(names(sortStaff(rows, "anniversary", "asc", today))).toEqual(["Amy", "Ben", "Cat"]);
   });
 });
