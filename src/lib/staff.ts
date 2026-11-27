@@ -58,10 +58,11 @@ export function fullName(e: { first_name: string; last_name: string }) {
   return `${e.first_name} ${e.last_name}`;
 }
 
-export const STAFF_SORT_KEYS = ["name", "job_title", "start_date", "leave_date", "service", "anniversary", "leave_reason"] as const;
+export const STAFF_SORT_KEYS = ["payroll_id", "name", "job_title", "start_date", "leave_date", "service", "anniversary", "leave_reason"] as const;
 export type StaffSortKey = (typeof STAFF_SORT_KEYS)[number];
 
 type DirectoryRow = {
+  payroll_id: string | null;
   first_name: string;
   last_name: string;
   job_title: string | null;
@@ -89,7 +90,7 @@ export function sortStaff<T extends DirectoryRow>(rows: T[], key: StaffSortKey, 
     .map((row) => ({ row, v: value(row) }))
     .sort((a, b) => {
       if (a.v === null || b.v === null) return a.v === b.v ? 0 : a.v === null ? 1 : -1;
-      const c = typeof a.v === "number" ? a.v - (b.v as number) : a.v.localeCompare(b.v as string, "en-GB", { sensitivity: "base" });
+      const c = typeof a.v === "number" ? a.v - (b.v as number) : a.v.localeCompare(b.v as string, "en-GB", { sensitivity: "base", numeric: true });
       return c * sign;
     })
     .map(({ row }) => row);
