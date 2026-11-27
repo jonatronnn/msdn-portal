@@ -2,9 +2,14 @@ import { ActionForm } from "@/components/action-form";
 import { Card, Field, Input, PageHeader } from "@/components/ui";
 import { requireSession } from "@/lib/auth";
 import { addNewStarter } from "@/app/(portal)/staff/actions";
+import { nextPayrollId } from "@/lib/staff";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function NewStarterPage() {
   await requireSession();
+  const supabase = await createClient();
+  const { data: ids } = await supabase.from("employees").select("payroll_id").not("payroll_id", "is", null);
+  const payrollId = nextPayrollId((ids ?? []).map((e) => e.payroll_id));
   return (
     <>
       <PageHeader title="New starter" />
@@ -29,6 +34,9 @@ export default async function NewStarterPage() {
             </Field>
             <Field label="Start date">
               <Input name="start_date" type="date" />
+            </Field>
+            <Field label="Employee / payroll ID" hint="The next number, filled in for you.">
+              <Input name="payroll_id" defaultValue={payrollId} />
             </Field>
           </div>
           <label className="flex items-center gap-2 text-sm">

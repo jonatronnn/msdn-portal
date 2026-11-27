@@ -183,6 +183,7 @@ export async function addNewStarter(_: ActionState, formData: FormData): Promise
     email: text(formData, "email")?.toLowerCase() ?? "",
     job_title: text(formData, "job_title"),
     start_date: text(formData, "start_date"),
+    payroll_id: text(formData, "payroll_id")?.toUpperCase() ?? null,
   };
   const invalid = checkEmployment({ ...employmentFields(new FormData()), ...fields });
   if (invalid) return invalid;

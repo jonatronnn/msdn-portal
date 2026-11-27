@@ -25,6 +25,11 @@ export default async function StarterFormPage({ params }: PageProps<"/starter/[t
             medical details only by the owner and managers. Fields marked * are required. This link works
             once.
           </p>
+          {link.employees.payroll_id && (
+            <p className="mb-6 text-sm">
+              Your employee ID: <span className="font-semibold">{link.employees.payroll_id}</span>
+            </p>
+          )}
           <ActionForm action={submitStarterForm.bind(null, token)} submitLabel="Send my details" className="space-y-8">
             <fieldset className="grid gap-4 sm:grid-cols-2">
               <legend className="mb-2 font-semibold">About you</legend>
