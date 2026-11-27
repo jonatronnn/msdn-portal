@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { Toggle } from "@/components/toggle";
-import { Badge, Card, DetailList, Empty, Field, Input, LinkButton, PageHeader, Select, Table, Td, Textarea } from "@/components/ui";
+import { Badge, Card, DetailList, Empty, Field, Input, LinkButton, PageHeader, Select, Table, Td } from "@/components/ui";
 import { isOwner, requireSession } from "@/lib/auth";
 import { decryptJson } from "@/lib/crypto";
 import { addDays, formatDate, formatDateNumeric, formatLengthOfService, formatTimeUntil, isCurrentEmployee, nextMilestone, todayInLondon } from "@/lib/dates";
 import { env } from "@/lib/env";
-import { type BankDetails, formatAddress, type IdNumbers, formatNiNumber, formatPay, formatSortCode, missingEmploymentDetails } from "@/lib/staff";
+import { type BankDetails, formatAddress, type IdNumbers, LEAVE_REASONS, formatNiNumber, formatPay, formatSortCode, missingEmploymentDetails } from "@/lib/staff";
 import { MAX_FILE_MB } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import type { ShiftDay } from "@/lib/wages";
@@ -21,6 +21,7 @@ import {
   saveBankDetails,
   saveIdNumbers,
   sendStarterFormAction,
+  setInfoFormDismissed,
   setTaskDone,
   uploadContract,
 } from "../actions";
@@ -125,27 +126,75 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
         <p className="mb-6 rounded-md bg-amber-50 p-3 text-sm text-amber-900">Still to add: {missing.join(", ")}.</p>
       )}
 
-      <Card title="Important information form">
-        <p className="mb-4 text-sm">
-          {e.info_form_submitted_at ? (
-            <>Returned {formatTimestamp(e.info_form_submitted_at)}.</>
-          ) : linkActive ? (
-            <>
-              Sent to {link.sent_to} on {formatTimestamp(link.sent_at)} by {link.sent_by_name}. The link expires{" "}
-              {formatDate(link.expires_at.slice(0, 10))}.
-            </>
-          ) : link ? (
-            <>The last link has expired or was replaced. Send a new one.</>
-          ) : (
-            <>Not sent yet. It asks for their personal details, emergency contact, NI number and bank details.</>
-          )}
-        </p>
-        <ActionForm
-          action={sendStarterFormAction.bind(null, id)}
-          submitLabel={link ? "Send a new link" : "Send form"}
-          variant="secondary"
-          className=""
-          confirm={linkActive ? "The link already sent will stop working. Send a new one?" : undefined}
+      {e.info_form_dismissed_at ? (
+        <form action={setInfoFormDismissed.bind(null, id, false)} className="mb-6">
+          <button className="text-sm text-brand-700 hover:underline">Show the Important information form</button>
+        </form>
+      ) : (
+        <Card
+          title="Important information form"
+          actions={
+            <form action={setInfoFormDismissed.bind(null, id, true)}>
+              <button
+                className="text-lg leading-none text-stone-400 hover:text-stone-700"
+                aria-label="Hide the Important information form"
+                title="Hide"
+              >
+                ×
+              </button>
+            </form>
+          }
+        >
+          <p className="mb-4 text-sm">
+            {e.info_form_submitted_at ? (
+              <>Returned {formatTimestamp(e.info_form_submitted_at)}.</>
+            ) : linkActive ? (
+              <>
+                Sent to {link.sent_to} on {formatTimestamp(link.sent_at)} by {link.sent_by_name}. The link expires{" "}
+                {formatDate(link.expires_at.slice(0, 10))}.
+              </>
+            ) : link ? (
+              <>The last link has expired or was replaced. Send a new one.</>
+            ) : (
+              <>Not sent yet. It asks for their personal details, emergency contact, NI number and bank details.</>
+            )}
+          </p>
+          <ActionForm
+            action={sendStarterFormAction.bind(null, id)}
+            submitLabel={link ? "Send a new link" : "Send form"}
+            variant="secondary"
+            className=""
+            confirm={linkActive ? "The link already sent will stop working. Send a new one?" : undefined}
+          />
+        </Card>
+      )}
+
+      <Card title="Personal details">
+        <DetailList
+          items={[
+            ["Nickname", e.nickname],
+            ["Email", e.email],
+            ["Mobile", e.mobile_phone],
+            ["Home phone", e.home_phone],
+            ["Date of birth", formatDateNumeric(e.date_of_birth)],
+            ["Gender", e.gender ?? "Not specified"],
+            ["Nationality", e.nationality],
+            ["Place of birth", e.place_of_birth],
+            ["National Insurance number", formatNiNumber(e.ni_number)],
+            ["Home address", formatAddress(e)],
+            [
+              "Emergency contact",
+              e.emergency_contact_name &&
+                [
+                  `${e.emergency_contact_name}${e.emergency_contact_relationship ? ` (${e.emergency_contact_relationship})` : ""}`,
+                  e.emergency_contact_phone,
+                  e.emergency_contact_address,
+                ]
+                  .filter(Boolean)
+                  .join(", "),
+            ],
+            ["Special notes", e.special_notes && <span className="whitespace-pre-line">{e.special_notes}</span>],
+          ]}
         />
       </Card>
 
@@ -181,35 +230,6 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
         patterns={(patterns ?? []).map(({ shift_pattern_days, ...p }) => ({ ...p, days: shift_pattern_days as ShiftDay[] }))}
         today={today}
       />
-
-      <Card title="Personal details">
-        <DetailList
-          items={[
-            ["Nickname", e.nickname],
-            ["Email", e.email],
-            ["Mobile", e.mobile_phone],
-            ["Home phone", e.home_phone],
-            ["Date of birth", formatDateNumeric(e.date_of_birth)],
-            ["Gender", e.gender ?? "Not specified"],
-            ["Nationality", e.nationality],
-            ["Place of birth", e.place_of_birth],
-            ["National Insurance number", formatNiNumber(e.ni_number)],
-            ["Home address", formatAddress(e)],
-            [
-              "Emergency contact",
-              e.emergency_contact_name &&
-                [
-                  `${e.emergency_contact_name}${e.emergency_contact_relationship ? ` (${e.emergency_contact_relationship})` : ""}`,
-                  e.emergency_contact_phone,
-                  e.emergency_contact_address,
-                ]
-                  .filter(Boolean)
-                  .join(", "),
-            ],
-            ["Special notes", e.special_notes && <span className="whitespace-pre-line">{e.special_notes}</span>],
-          ]}
-        />
-      </Card>
 
       <Card title="Bank details">
         {!owner ? (
@@ -354,10 +374,11 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
           <Field label="Completed">
             <Input name="completed_on" type="date" />
           </Field>
-          <Field label="Expires" hint="Blank: worked out from the course.">
+          <Field label="Expires">
             <Input name="expires_on" type="date" />
           </Field>
         </ActionForm>
+        <p className="mt-2 text-xs text-stone-500">Leave Expires blank to work it out from the course length.</p>
       </Card>
 
       <Card title="Contract">
@@ -394,10 +415,11 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
           <Field label="Title">
             <Input name="title" defaultValue="Contract of employment" required />
           </Field>
-          <Field label="Signed contract (PDF)" hint={`Up to ${MAX_FILE_MB}MB.`}>
+          <Field label="Signed contract (PDF)">
             <Input name="file" type="file" accept="application/pdf" required />
           </Field>
         </ActionForm>
+        <p className="mt-2 text-xs text-stone-500">PDF up to {MAX_FILE_MB}MB.</p>
       </Card>
 
       {tasks && tasks.length > 0 && (
@@ -458,7 +480,14 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
                 <Input name="leave_date" type="date" required />
               </Field>
               <Field label="Reason">
-                <Textarea name="leave_reason" required />
+                <Select name="leave_reason" required defaultValue="">
+                  <option value="" disabled>
+                    Choose…
+                  </option>
+                  {LEAVE_REASONS.map((r) => (
+                    <option key={r}>{r}</option>
+                  ))}
+                </Select>
               </Field>
             </div>
           </ActionForm>

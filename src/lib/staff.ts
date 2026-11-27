@@ -5,6 +5,20 @@ export const QUALIFICATION_LEVELS = ["Unqualified", "Level 2", "Level 3", "Level
 // Blank means not specified.
 export const GENDERS = ["Male", "Female", "Non-binary"];
 
+// Why employment ended, for the End of employment form.
+export const LEAVE_REASONS = [
+  "Resignation",
+  "End of fixed-term contract",
+  "Dismissal",
+  "Termination",
+  "Redundancy",
+  "Retirement",
+  "Mutual agreement",
+  "End of probation",
+  "Death",
+  "Other",
+];
+
 export const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Don't know"];
 
 // Countries and regions, for suggesting a place of birth.

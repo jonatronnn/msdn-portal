@@ -22,6 +22,7 @@ import { checkRecordAutomations, completeAutomation, sendStarterForm } from "@/l
 import {
   CONTRACT_TYPES,
   GENDERS,
+  LEAVE_REASONS,
   medicalFields,
   NI_NUMBER_ERROR,
   normaliseIdNumber,
@@ -182,6 +183,7 @@ export async function addNewStarter(_: ActionState, formData: FormData): Promise
     email: text(formData, "email")?.toLowerCase() ?? "",
     job_title: text(formData, "job_title"),
     start_date: text(formData, "start_date"),
+    payroll_id: text(formData, "payroll_id")?.toUpperCase() ?? null,
   };
   const invalid = checkEmployment({ ...employmentFields(new FormData()), ...fields });
   if (invalid) return invalid;
@@ -212,6 +214,7 @@ export async function endEmployment(id: string, _: ActionState, formData: FormDa
   const leaveDate = text(formData, "leave_date");
   const leaveReason = text(formData, "leave_reason");
   if (!leaveDate || !leaveReason) return { error: "Enter the leave date and reason." };
+  if (!LEAVE_REASONS.includes(leaveReason)) return { error: "Choose a reason." };
 
   const supabase = await createClient();
   const { data: e } = await supabase.from("employees").select("start_date").eq("id", id).single();
@@ -239,6 +242,17 @@ export async function sendStarterFormAction(id: string, _: ActionState): Promise
   const result = await sendStarterForm(supabase, e, actorName(session));
   revalidatePath(`/staff/${id}`);
   return result;
+}
+
+// Hides (or brings back) the Important information form on their record.
+export async function setInfoFormDismissed(id: string, dismissed: boolean) {
+  await requireSession();
+  const supabase = await createClient();
+  await supabase
+    .from("employees")
+    .update({ info_form_dismissed_at: dismissed ? new Date().toISOString() : null })
+    .eq("id", id);
+  revalidatePath(`/staff/${id}`);
 }
 
 export async function saveBankDetails(id: string, _: ActionState, formData: FormData): Promise<ActionState> {
