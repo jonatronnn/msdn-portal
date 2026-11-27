@@ -18,7 +18,7 @@ export const modules: Module[] = [
   {
     name: "Staff",
     items: [
-      { href: "/staff", label: "Staff directory", icon: "users", roles: managers },
+      { href: "/staff", label: "Directory", icon: "users", roles: managers },
       { href: "/onboarding", label: "Onboarding", icon: "clipboard", roles: managers },
       { href: "/wages", label: "Wages", icon: "clock", roles: managers },
     ],

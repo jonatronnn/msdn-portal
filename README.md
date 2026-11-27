@@ -31,7 +31,7 @@ storage and are only handed out as one-minute links.
 
 ## What's in the Staff module
 
-- **Staff directory** – current staff with length of service (years and months)
+- **Directory** – current staff with length of service (years and months)
   and how long until their next major work anniversary (1, 5, 10, 15 or 20
   years). Former staff are in the **Archive**, with leave date and reason.
 - **Staff records** – the details managers enter (name, email, job title, start

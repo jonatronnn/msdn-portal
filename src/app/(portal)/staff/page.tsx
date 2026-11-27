@@ -44,7 +44,7 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
 
   return (
     <>
-      <PageHeader title="Staff directory">
+      <PageHeader title="Directory">
         <LinkButton href="/onboarding/new" variant="primary">
           New starter
         </LinkButton>
