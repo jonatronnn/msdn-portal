@@ -6,7 +6,7 @@ type Employee = Partial<Database["public"]["Tables"]["employees"]["Row"]>;
 
 const v = (value: string | number | null | undefined) => (value == null ? "" : String(value));
 
-// Details managers enter, plus the payroll reference.
+// Details managers enter, plus the employee ID.
 export function EmploymentFields({ employee = {} }: { employee?: Employee }) {
   return (
     <div className="space-y-6">
@@ -86,7 +86,7 @@ export function EmploymentFields({ employee = {} }: { employee?: Employee }) {
         <Field label="Qualification date">
           <Input name="qualification_date" type="date" defaultValue={v(employee.qualification_date)} />
         </Field>
-        <Field label="Employee / payroll ID" hint="Their employee number, also used as their payroll ID in QuickBooks.">
+        <Field label="Employee ID">
           <Input name="payroll_id" defaultValue={v(employee.payroll_id)} />
         </Field>
       </fieldset>

@@ -87,19 +87,18 @@ describe("bank details", () => {
 });
 
 describe("nextPayrollId", () => {
-  it("starts at PR070", () => {
-    expect(nextPayrollId([])).toBe("PR070");
-    expect(nextPayrollId([null, "PR012"])).toBe("PR070");
+  it("starts at 070", () => {
+    expect(nextPayrollId([])).toBe("070");
+    expect(nextPayrollId([null, "012"])).toBe("070");
   });
-  it("follows the highest PR number", () => {
-    expect(nextPayrollId(["PR070", "PR075", "pr071"])).toBe("PR076");
-    expect(nextPayrollId(["PR999"])).toBe("PR1000");
+  it("follows the highest number", () => {
+    expect(nextPayrollId(["070", "075", "071"])).toBe("076");
+    expect(nextPayrollId(["999"])).toBe("1000");
   });
-  it("ignores IDs in other formats", () => {
-    expect(nextPayrollId(["12345", "PR07X", "PR080"])).toBe("PR081");
+  it("reads older PR-style IDs and ignores other formats", () => {
+    expect(nextPayrollId(["PR080", "07X", "A12"])).toBe("081");
   });
 });
-
 describe("sortStaff", () => {
   const today = "2026-11-27";
   const row = (first_name: string, last_name: string, job_title: string | null, start_date: string | null, payroll_id: string | null = null) => ({
@@ -130,7 +129,7 @@ describe("sortStaff", () => {
   });
 
   it("sorts employee IDs by their number", () => {
-    const ids = [row("A", "A", null, null, "PR100"), row("B", "B", null, null, "PR070"), row("C", "C", null, null, null)];
+    const ids = [row("A", "A", null, null, "100"), row("B", "B", null, null, "070"), row("C", "C", null, null, null)];
     expect(names(sortStaff(ids, "payroll_id", "asc", today))).toEqual(["B", "A", "C"]);
   });
 

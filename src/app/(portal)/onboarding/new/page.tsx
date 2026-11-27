@@ -35,7 +35,7 @@ export default async function NewStarterPage() {
             <Field label="Start date">
               <Input name="start_date" type="date" />
             </Field>
-            <Field label="Employee / payroll ID">
+            <Field label="Employee ID">
               <Input name="payroll_id" defaultValue={payrollId} />
             </Field>
           </div>

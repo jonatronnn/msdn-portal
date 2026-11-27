@@ -41,7 +41,7 @@ function number(formData: FormData, key: string) {
   return value ? Number(value) : null;
 }
 
-// Fields managers enter (M), plus the payroll reference (O).
+// Fields managers enter (M), plus the employee ID (O).
 function employmentFields(formData: FormData) {
   return {
     first_name: text(formData, "first_name") ?? "",
@@ -126,7 +126,7 @@ async function newPayrollId(supabase: Awaited<ReturnType<typeof createClient>>) 
   return nextPayrollId((data ?? []).map((e) => e.payroll_id));
 }
 
-// Inserts a new employee. New starters get the next employee / payroll ID,
+// Inserts a new employee. New starters get the next employee ID,
 // trying again if someone else took that number at the same moment.
 async function insertEmployee(
   supabase: Awaited<ReturnType<typeof createClient>>,
