@@ -102,7 +102,8 @@ describe("nextPayrollId", () => {
 
 describe("sortStaff", () => {
   const today = "2026-11-27";
-  const row = (first_name: string, last_name: string, job_title: string | null, start_date: string | null) => ({
+  const row = (first_name: string, last_name: string, job_title: string | null, start_date: string | null, payroll_id: string | null = null) => ({
+    payroll_id,
     first_name,
     last_name,
     job_title,
@@ -126,6 +127,11 @@ describe("sortStaff", () => {
     expect(names(sortStaff(rows, "job_title", "asc", today))).toEqual(["Cat", "Amy", "Ben"]);
     expect(names(sortStaff(rows, "job_title", "desc", today))).toEqual(["Amy", "Cat", "Ben"]);
     expect(names(sortStaff(rows, "start_date", "desc", today))).toEqual(["Ben", "Amy", "Cat"]);
+  });
+
+  it("sorts employee IDs by their number", () => {
+    const ids = [row("A", "A", null, null, "PR100"), row("B", "B", null, null, "PR070"), row("C", "C", null, null, null)];
+    expect(names(sortStaff(ids, "payroll_id", "asc", today))).toEqual(["B", "A", "C"]);
   });
 
   it("sorts by length of service and next anniversary", () => {
