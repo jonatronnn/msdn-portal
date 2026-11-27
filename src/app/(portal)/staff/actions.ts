@@ -241,6 +241,17 @@ export async function sendStarterFormAction(id: string, _: ActionState): Promise
   return result;
 }
 
+// Hides (or brings back) the Important information form on their record.
+export async function setInfoFormDismissed(id: string, dismissed: boolean) {
+  await requireSession();
+  const supabase = await createClient();
+  await supabase
+    .from("employees")
+    .update({ info_form_dismissed_at: dismissed ? new Date().toISOString() : null })
+    .eq("id", id);
+  revalidatePath(`/staff/${id}`);
+}
+
 export async function saveBankDetails(id: string, _: ActionState, formData: FormData): Promise<ActionState> {
   const session = await requireSession("admin");
   const accountName = text(formData, "account_name");

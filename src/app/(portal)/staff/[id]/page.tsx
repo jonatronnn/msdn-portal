@@ -21,6 +21,7 @@ import {
   saveBankDetails,
   saveIdNumbers,
   sendStarterFormAction,
+  setInfoFormDismissed,
   setTaskDone,
   uploadContract,
 } from "../actions";
@@ -125,27 +126,75 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
         <p className="mb-6 rounded-md bg-amber-50 p-3 text-sm text-amber-900">Still to add: {missing.join(", ")}.</p>
       )}
 
-      <Card title="Important information form">
-        <p className="mb-4 text-sm">
-          {e.info_form_submitted_at ? (
-            <>Returned {formatTimestamp(e.info_form_submitted_at)}.</>
-          ) : linkActive ? (
-            <>
-              Sent to {link.sent_to} on {formatTimestamp(link.sent_at)} by {link.sent_by_name}. The link expires{" "}
-              {formatDate(link.expires_at.slice(0, 10))}.
-            </>
-          ) : link ? (
-            <>The last link has expired or was replaced. Send a new one.</>
-          ) : (
-            <>Not sent yet. It asks for their personal details, emergency contact, NI number and bank details.</>
-          )}
-        </p>
-        <ActionForm
-          action={sendStarterFormAction.bind(null, id)}
-          submitLabel={link ? "Send a new link" : "Send form"}
-          variant="secondary"
-          className=""
-          confirm={linkActive ? "The link already sent will stop working. Send a new one?" : undefined}
+      {e.info_form_dismissed_at ? (
+        <form action={setInfoFormDismissed.bind(null, id, false)} className="mb-6">
+          <button className="text-sm text-brand-700 hover:underline">Show the Important information form</button>
+        </form>
+      ) : (
+        <Card
+          title="Important information form"
+          actions={
+            <form action={setInfoFormDismissed.bind(null, id, true)}>
+              <button
+                className="text-lg leading-none text-stone-400 hover:text-stone-700"
+                aria-label="Hide the Important information form"
+                title="Hide"
+              >
+                ×
+              </button>
+            </form>
+          }
+        >
+          <p className="mb-4 text-sm">
+            {e.info_form_submitted_at ? (
+              <>Returned {formatTimestamp(e.info_form_submitted_at)}.</>
+            ) : linkActive ? (
+              <>
+                Sent to {link.sent_to} on {formatTimestamp(link.sent_at)} by {link.sent_by_name}. The link expires{" "}
+                {formatDate(link.expires_at.slice(0, 10))}.
+              </>
+            ) : link ? (
+              <>The last link has expired or was replaced. Send a new one.</>
+            ) : (
+              <>Not sent yet. It asks for their personal details, emergency contact, NI number and bank details.</>
+            )}
+          </p>
+          <ActionForm
+            action={sendStarterFormAction.bind(null, id)}
+            submitLabel={link ? "Send a new link" : "Send form"}
+            variant="secondary"
+            className=""
+            confirm={linkActive ? "The link already sent will stop working. Send a new one?" : undefined}
+          />
+        </Card>
+      )}
+
+      <Card title="Personal details">
+        <DetailList
+          items={[
+            ["Nickname", e.nickname],
+            ["Email", e.email],
+            ["Mobile", e.mobile_phone],
+            ["Home phone", e.home_phone],
+            ["Date of birth", formatDateNumeric(e.date_of_birth)],
+            ["Gender", e.gender ?? "Not specified"],
+            ["Nationality", e.nationality],
+            ["Place of birth", e.place_of_birth],
+            ["National Insurance number", formatNiNumber(e.ni_number)],
+            ["Home address", formatAddress(e)],
+            [
+              "Emergency contact",
+              e.emergency_contact_name &&
+                [
+                  `${e.emergency_contact_name}${e.emergency_contact_relationship ? ` (${e.emergency_contact_relationship})` : ""}`,
+                  e.emergency_contact_phone,
+                  e.emergency_contact_address,
+                ]
+                  .filter(Boolean)
+                  .join(", "),
+            ],
+            ["Special notes", e.special_notes && <span className="whitespace-pre-line">{e.special_notes}</span>],
+          ]}
         />
       </Card>
 
@@ -181,35 +230,6 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
         patterns={(patterns ?? []).map(({ shift_pattern_days, ...p }) => ({ ...p, days: shift_pattern_days as ShiftDay[] }))}
         today={today}
       />
-
-      <Card title="Personal details">
-        <DetailList
-          items={[
-            ["Nickname", e.nickname],
-            ["Email", e.email],
-            ["Mobile", e.mobile_phone],
-            ["Home phone", e.home_phone],
-            ["Date of birth", formatDateNumeric(e.date_of_birth)],
-            ["Gender", e.gender ?? "Not specified"],
-            ["Nationality", e.nationality],
-            ["Place of birth", e.place_of_birth],
-            ["National Insurance number", formatNiNumber(e.ni_number)],
-            ["Home address", formatAddress(e)],
-            [
-              "Emergency contact",
-              e.emergency_contact_name &&
-                [
-                  `${e.emergency_contact_name}${e.emergency_contact_relationship ? ` (${e.emergency_contact_relationship})` : ""}`,
-                  e.emergency_contact_phone,
-                  e.emergency_contact_address,
-                ]
-                  .filter(Boolean)
-                  .join(", "),
-            ],
-            ["Special notes", e.special_notes && <span className="whitespace-pre-line">{e.special_notes}</span>],
-          ]}
-        />
-      </Card>
 
       <Card title="Bank details">
         {!owner ? (
