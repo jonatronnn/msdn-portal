@@ -2,12 +2,12 @@ import Link from "next/link";
 import { Icon, type IconName } from "@/components/icons";
 import { Badge, Card, Empty, PageHeader } from "@/components/ui";
 import { requireSession } from "@/lib/auth";
-import { addDays, formatDate, formatTimeUntil, isCurrentEmployee, nextMilestone, todayInLondon } from "@/lib/dates";
+import { addDays, formatDate, formatTimeUntil, isCurrentEmployee, nextBirthday, nextMilestone, todayInLondon } from "@/lib/dates";
 import { fullName } from "@/lib/staff";
 import { createClient } from "@/lib/supabase/server";
 import { EmailList } from "./email-list";
 
-// How far ahead the dashboard looks for anniversaries and expiring training.
+// How far ahead the dashboard looks for anniversaries, birthdays and expiring training.
 const LOOKAHEAD_DAYS = 60;
 
 export default async function Dashboard() {
@@ -17,7 +17,7 @@ export default async function Dashboard() {
   const horizon = addDays(today, LOOKAHEAD_DAYS);
 
   const [{ data: employees }, { data: openTasks }, { data: training }] = await Promise.all([
-    supabase.from("employees").select("id, first_name, last_name, email, start_date, leave_date").order("last_name").order("first_name"),
+    supabase.from("employees").select("id, first_name, last_name, email, start_date, leave_date, date_of_birth").order("last_name").order("first_name"),
     supabase.from("onboarding_tasks").select("employee_id").is("completed_at", null),
     supabase
       .from("employee_training")
@@ -35,6 +35,13 @@ export default async function Dashboard() {
     .flatMap((e) => {
       const m = e.start_date ? nextMilestone(e.start_date, today) : null;
       return m && m.date <= horizon ? [{ id: e.id, name: fullName(e), ...m }] : [];
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const birthdays = current
+    .flatMap((e) => {
+      const b = e.date_of_birth ? nextBirthday(e.date_of_birth, today) : null;
+      return b && b.date <= horizon ? [{ id: e.id, name: fullName(e), ...b }] : [];
     })
     .sort((a, b) => a.date.localeCompare(b.date));
 
@@ -66,26 +73,47 @@ export default async function Dashboard() {
         />
       </div>
 
-      <Card title={`Major work anniversaries in the next ${LOOKAHEAD_DAYS} days`}>
-        {anniversaries.length ? (
-          <ul className="divide-y divide-stone-100 text-sm">
-            {anniversaries.map((a) => (
-              <li key={a.id} className="flex flex-wrap items-center gap-3 py-2">
-                <span className="w-28 text-stone-500">{formatDate(a.date)}</span>
-                <Link href={`/staff/${a.id}`} className="font-medium text-brand-800 hover:underline">
-                  {a.name}
-                </Link>
-                <Badge tone="green">
-                  {a.years} year{a.years === 1 ? "" : "s"}
-                </Badge>
-                <span className="text-stone-500">{formatTimeUntil(today, a.date)}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Empty>None coming up.</Empty>
-        )}
-      </Card>
+      <div className="grid items-start gap-x-6 lg:grid-cols-2">
+        <Card title={`Major work anniversaries in the next ${LOOKAHEAD_DAYS} days`}>
+          {anniversaries.length ? (
+            <ul className="divide-y divide-stone-100 text-sm">
+              {anniversaries.map((a) => (
+                <li key={a.id} className="flex flex-wrap items-center gap-3 py-2">
+                  <span className="w-28 text-stone-500">{formatDate(a.date)}</span>
+                  <Link href={`/staff/${a.id}`} className="font-medium text-brand-800 hover:underline">
+                    {a.name}
+                  </Link>
+                  <Badge tone="green">
+                    {a.years} year{a.years === 1 ? "" : "s"}
+                  </Badge>
+                  <span className="text-stone-500">{formatTimeUntil(today, a.date)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Empty>None coming up.</Empty>
+          )}
+        </Card>
+
+        <Card title={`Birthdays in the next ${LOOKAHEAD_DAYS} days`}>
+          {birthdays.length ? (
+            <ul className="divide-y divide-stone-100 text-sm">
+              {birthdays.map((b) => (
+                <li key={b.id} className="flex flex-wrap items-center gap-3 py-2">
+                  <span className="w-28 text-stone-500">{formatDate(b.date)}</span>
+                  <Link href={`/staff/${b.id}`} className="font-medium text-brand-800 hover:underline">
+                    {b.name}
+                  </Link>
+                  <Badge tone="green">Turning {b.age}</Badge>
+                  <span className="text-stone-500">{formatTimeUntil(today, b.date)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Empty>None coming up.</Empty>
+          )}
+        </Card>
+      </div>
 
       <section id="training">
         <Card title="Training to renew">
