@@ -61,9 +61,7 @@ export async function FamlyCard({
     return (
       <Card title="Famly">
         <p className="mb-4 text-sm text-stone-600">
-          Linked to Famly{employee.famly_synced_at && ` · last synced ${formatTimestamp(employee.famly_synced_at)}`}. Syncs
-          their name, email, job title, date of birth, gender, mobile, address, room, qualification level, and start and
-          leave dates. Blank fields never wipe the other side.
+          Linked to Famly{employee.famly_synced_at && ` · last synced ${formatTimestamp(employee.famly_synced_at)}`}.
         </p>
         <div className="flex flex-wrap items-end gap-3">
           <ActionForm action={sendChangesToFamly.bind(null, employee.id)} submitLabel="Send changes to Famly" variant="secondary" className="flex flex-wrap items-end gap-3">
@@ -77,7 +75,7 @@ export async function FamlyCard({
 
   return (
     <Card title="Famly">
-      <p className="mb-4 text-sm text-stone-600">Not in Famly yet. Adding them creates their Famly staff profile.</p>
+      <p className="mb-4 text-sm text-stone-600">Not in Famly yet.</p>
       {employee.start_date ? (
         <ActionForm action={addToFamly.bind(null, employee.id)} submitLabel="Add to Famly" variant="secondary" className="flex flex-wrap items-end gap-3">
           <RoomSelect rooms={rooms} />

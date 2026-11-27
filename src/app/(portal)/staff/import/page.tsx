@@ -53,10 +53,6 @@ export default async function ImportFromFamlyPage() {
           <Empty>Everyone in Famly is already in the portal.</Empty>
         ) : (
           <ActionForm action={importFromFamly} submitLabel="Import selected">
-            <p className="text-sm text-stone-600">
-              Current and future staff in Famly who aren&apos;t in the portal yet. Their name, email, job title, date of
-              birth, gender, mobile, address, room, qualification level and start date are copied across.
-            </p>
             <SelectAll name="famly_ids" />
             <Table head={["", "Name", "Email", "Job title", "Date of birth", "Start date", ""]}>
               {notInPortal.map((f) => (

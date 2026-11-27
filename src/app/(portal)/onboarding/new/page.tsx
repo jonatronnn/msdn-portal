@@ -14,10 +14,6 @@ export default async function NewStarterPage() {
     <>
       <PageHeader title="New starter" />
       <Card>
-        <p className="mb-6 text-sm text-stone-600">
-          This creates their record and onboarding checklist. You can add the job, contract, hours and pay details on their
-          page afterwards.
-        </p>
         <ActionForm action={addNewStarter} submitLabel="Create new starter">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="First name *">

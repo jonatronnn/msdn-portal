@@ -48,7 +48,7 @@ export default async function SettingsPage() {
           <Field label="Training">
             <Input name="name" required />
           </Field>
-          <Field label="Lasts (months)" hint="Blank if it doesn't expire.">
+          <Field label="Lasts (months)">
             <Input name="validity_months" inputMode="numeric" />
           </Field>
         </ActionForm>

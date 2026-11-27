@@ -48,7 +48,7 @@ export function SignatureGenerator({ defaultName }: { defaultName: string }) {
             <Field label="Name">
               <Input value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
             </Field>
-            <Field label="Role" hint="For example Room Leader or Management Team.">
+            <Field label="Role">
               <Input value={role} onChange={(e) => setRole(e.target.value)} autoComplete="off" />
             </Field>
             <div className="flex flex-col gap-2">

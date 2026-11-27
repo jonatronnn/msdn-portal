@@ -7,7 +7,6 @@ import { decryptJson } from "@/lib/crypto";
 import { addDays, formatDate, formatDateNumeric, formatLengthOfService, formatTimeUntil, isCurrentEmployee, nextMilestone, todayInLondon } from "@/lib/dates";
 import { env } from "@/lib/env";
 import { type BankDetails, formatAddress, type IdNumbers, LEAVE_REASONS, formatNiNumber, formatPay, formatSortCode, missingEmploymentDetails, SIGNED_DOCUMENTS } from "@/lib/staff";
-import { MAX_FILE_MB } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import type { ShiftDay } from "@/lib/wages";
 import {
@@ -246,8 +245,8 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
         {!owner ? (
           <p className="text-sm text-stone-600">
             {e.bank_details_received_at
-              ? `On file since ${formatDate(e.bank_details_received_at.slice(0, 10))}. Only the owner can view them.`
-              : "Not provided yet. They're collected on the Important information form."}
+              ? `On file since ${formatDate(e.bank_details_received_at.slice(0, 10))}.`
+              : "Not provided yet."}
           </p>
         ) : (
           <>
@@ -387,7 +386,6 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
             <Input name="expires_on" type="date" />
           </Field>
         </ActionForm>
-        <p className="mt-2 text-xs text-stone-500">Leave Expires blank to work it out from the course length.</p>
       </Card>
 
       <Card title={`Signed documents (${uploadedDocs.length}/${SIGNED_DOCUMENTS.length})`}>
@@ -443,7 +441,6 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
             <Input name="file" type="file" accept="application/pdf" required />
           </Field>
         </ActionForm>
-        <p className="mt-2 text-xs text-stone-500">PDF up to {MAX_FILE_MB}MB.</p>
       </Card>
 
       {tasks && tasks.length > 0 && (
@@ -505,7 +502,6 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
             variant="danger"
             confirm={`End ${e.first_name}'s employment? They'll move to the archive after their leave date.`}
           >
-            <p className="text-sm text-stone-600">They move to the archive after their leave date.</p>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Leave date">
                 <Input name="leave_date" type="date" required />

@@ -21,7 +21,7 @@ export function EmploymentFields({ employee = {} }: { employee?: Employee }) {
         <Field label="Last name *">
           <Input name="last_name" defaultValue={v(employee.last_name)} required />
         </Field>
-        <Field label="Email *" hint="The Important information form is sent here.">
+        <Field label="Email *">
           <Input name="email" type="email" defaultValue={v(employee.email)} required />
         </Field>
       </fieldset>
@@ -42,7 +42,7 @@ export function EmploymentFields({ employee = {} }: { employee?: Employee }) {
             ))}
           </Select>
         </Field>
-        <Field label="Contract end date" hint="For fixed-term contracts.">
+        <Field label="Contract end date">
           <Input name="contract_end_date" type="date" defaultValue={v(employee.contract_end_date)} />
         </Field>
         <Field label="Notice period">
@@ -161,7 +161,7 @@ export function PersonalFields({ employee = {} }: { employee?: Employee }) {
         </div>
       </fieldset>
 
-      <Field label="Special notes" hint="Kept in the portal only: Famly has no place for staff notes.">
+      <Field label="Special notes">
         <Textarea name="special_notes" rows={3} defaultValue={v(employee.special_notes)} />
       </Field>
     </div>
