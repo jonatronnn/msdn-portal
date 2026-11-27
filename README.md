@@ -93,7 +93,7 @@ storage and are only handed out as one-minute links.
   Tick "Has a second pattern" for alternating weeks (week A / week B). Each
   pattern applies from a date, so a change part-way through a month is used
   from that day.
-- **Wages** (under Staff) – months are grouped by year, with a tab for each month.
+- **Timesheets** (under Staff) – months are grouped by year, with a tab for each month.
   Starting a month adds everyone employed during it, with contracted hours for
   each working day from their shift patterns (only from the start date and up to
   the leave date; the row notes when someone started or left that month).

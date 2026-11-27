@@ -138,7 +138,7 @@ export function ShiftPatternCard({ employeeId, patterns, today }: { employeeId: 
         </ul>
       ) : (
         <div className="mb-4">
-          <Empty>No shift pattern yet. The monthly wages page uses it to fill in contracted hours.</Empty>
+          <Empty>No shift pattern yet. The monthly timesheets page uses it to fill in contracted hours.</Empty>
         </div>
       )}
 
