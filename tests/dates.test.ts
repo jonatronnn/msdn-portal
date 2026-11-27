@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addMonths, formatLengthOfService, formatTimeUntil, lengthOfService, nextMilestone, todayInLondon } from "@/lib/dates";
+import { addMonths, formatLengthOfService, formatTimeUntil, lengthOfService, nextBirthday, nextMilestone, todayInLondon } from "@/lib/dates";
 
 describe("lengthOfService", () => {
   it("counts whole months", () => {
@@ -76,5 +76,18 @@ describe("addMonths", () => {
     expect(addMonths("2026-11-10", 36)).toBe("2029-11-10");
     expect(addMonths("2026-01-31", 1)).toBe("2026-02-28");
     expect(addMonths("2026-12-15", 1)).toBe("2027-01-15");
+  });
+});
+
+describe("nextBirthday", () => {
+  it("finds this year's birthday, or next year's once it has passed", () => {
+    expect(nextBirthday("1990-12-05", "2026-11-27")).toEqual({ age: 36, date: "2026-12-05" });
+    expect(nextBirthday("1990-11-27", "2026-11-27")).toEqual({ age: 36, date: "2026-11-27" });
+    expect(nextBirthday("1990-01-10", "2026-11-27")).toEqual({ age: 37, date: "2027-01-10" });
+  });
+
+  it("uses 28 February for 29 February birthdays in non-leap years", () => {
+    expect(nextBirthday("2000-02-29", "2027-01-01")).toEqual({ age: 27, date: "2027-02-28" });
+    expect(nextBirthday("2000-02-29", "2028-01-01")).toEqual({ age: 28, date: "2028-02-29" });
   });
 });

@@ -95,6 +95,14 @@ export function nextMilestone(start: string, today: string) {
   return null;
 }
 
+// The next birthday on or after today and the age turned on it.
+export function nextBirthday(dob: string, today: string) {
+  const birthYear = Number(dob.slice(0, 4));
+  let year = Number(today.slice(0, 4));
+  if (occurrence(dob, year) < today) year += 1;
+  return { age: year - birthYear, date: occurrence(dob, year) };
+}
+
 // "today", "in 12 days", "in 3 mths", "in 1 yr 2 mths"
 export function formatTimeUntil(today: string, date: string) {
   const days = daysBetween(today, date);
