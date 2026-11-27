@@ -171,7 +171,7 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
               "Qualification",
               e.qualification_level && [e.qualification_level, formatDate(e.qualification_date)].filter(Boolean).join(", "),
             ],
-            ["Payroll reference", e.payroll_id],
+            ["Employee / payroll ID", e.payroll_id],
           ]}
         />
       </Card>
