@@ -1,3 +1,5 @@
+import { daysBetween, nextMilestone } from "@/lib/dates";
+
 export const QUALIFICATION_LEVELS = ["Unqualified", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7"];
 
 // Blank means not specified.
@@ -40,6 +42,43 @@ export function nextPayrollId(existing: (string | null)[]) {
 
 export function fullName(e: { first_name: string; last_name: string }) {
   return `${e.first_name} ${e.last_name}`;
+}
+
+export const STAFF_SORT_KEYS = ["name", "job_title", "start_date", "leave_date", "service", "anniversary", "leave_reason"] as const;
+export type StaffSortKey = (typeof STAFF_SORT_KEYS)[number];
+
+type DirectoryRow = {
+  first_name: string;
+  last_name: string;
+  job_title: string | null;
+  start_date: string | null;
+  leave_date: string | null;
+  leave_reason: string | null;
+};
+
+// Sorts the staff directory by one column. Blanks always go last.
+export function sortStaff<T extends DirectoryRow>(rows: T[], key: StaffSortKey, dir: "asc" | "desc", today: string) {
+  const value = (e: T): string | number | null => {
+    switch (key) {
+      case "name":
+        return `${e.last_name} ${e.first_name}`;
+      case "service":
+        return e.start_date ? daysBetween(e.start_date, e.leave_date && e.leave_date < today ? e.leave_date : today) : null;
+      case "anniversary":
+        return e.start_date ? (nextMilestone(e.start_date, today)?.date ?? null) : null;
+      default:
+        return e[key] || null;
+    }
+  };
+  const sign = dir === "asc" ? 1 : -1;
+  return rows
+    .map((row) => ({ row, v: value(row) }))
+    .sort((a, b) => {
+      if (a.v === null || b.v === null) return a.v === b.v ? 0 : a.v === null ? 1 : -1;
+      const c = typeof a.v === "number" ? a.v - (b.v as number) : a.v.localeCompare(b.v as string, "en-GB", { sensitivity: "base" });
+      return c * sign;
+    })
+    .map(({ row }) => row);
 }
 
 export function formatAddress(e: {

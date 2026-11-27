@@ -2,21 +2,45 @@ import Link from "next/link";
 import { Badge, Card, Empty, LinkButton, PageHeader, Table, Td } from "@/components/ui";
 import { requireSession } from "@/lib/auth";
 import { formatDate, formatLengthOfService, formatTimeUntil, isCurrentEmployee, nextMilestone, todayInLondon } from "@/lib/dates";
-import { fullName } from "@/lib/staff";
+import { fullName, sortStaff, STAFF_SORT_KEYS, type StaffSortKey } from "@/lib/staff";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
   await requireSession();
-  const archive = (await searchParams).view === "archive";
+  const params = await searchParams;
+  const archive = params.view === "archive";
+  const sort = STAFF_SORT_KEYS.find((k) => k === params.sort) ?? "name";
+  const dir = params.dir === "desc" ? "desc" : "asc";
   const today = todayInLondon();
 
   const supabase = await createClient();
   const { data } = await supabase
     .from("employees")
-    .select("id, first_name, last_name, job_title, start_date, leave_date, leave_reason")
-    .order("last_name")
-    .order("first_name");
-  const employees = (data ?? []).filter((e) => isCurrentEmployee(e, today) !== archive);
+    .select("id, first_name, last_name, job_title, start_date, leave_date, leave_reason");
+  const employees = sortStaff(
+    (data ?? []).filter((e) => isCurrentEmployee(e, today) !== archive),
+    sort,
+    dir,
+    today,
+  );
+
+  // A column heading that sorts by that column; clicking it again reverses the order.
+  const heading = (key: StaffSortKey, label: string) => {
+    const active = sort === key;
+    const next = active && dir === "asc" ? "desc" : "asc";
+    const query = new URLSearchParams({ ...(archive && { view: "archive" }), sort: key, dir: next });
+    return (
+      <Link
+        href={`/staff?${query}`}
+        className={`inline-flex items-center gap-1 hover:text-stone-800 ${active ? "text-stone-800" : ""}`}
+      >
+        {label}
+        <span aria-hidden className={active ? "" : "invisible"}>
+          {dir === "asc" || !active ? "▲" : "▼"}
+        </span>
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -49,7 +73,16 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
         {employees.length === 0 ? (
           <Empty>{archive ? "No former staff." : "No staff yet. Add existing staff or a new starter."}</Empty>
         ) : archive ? (
-          <Table head={["Name", "Job title", "Start date", "Leave date", "Length of service", "Reason"]}>
+          <Table
+            head={[
+              heading("name", "Name"),
+              heading("job_title", "Job title"),
+              heading("start_date", "Start date"),
+              heading("leave_date", "Leave date"),
+              heading("service", "Length of service"),
+              heading("leave_reason", "Reason"),
+            ]}
+          >
             {employees.map((e) => (
               <tr key={e.id}>
                 <Td>
@@ -66,7 +99,16 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
             ))}
           </Table>
         ) : (
-          <Table head={["Name", "Job title", "Start date", "Length of service", "Next major anniversary", ""]}>
+          <Table
+            head={[
+              heading("name", "Name"),
+              heading("job_title", "Job title"),
+              heading("start_date", "Start date"),
+              heading("service", "Length of service"),
+              heading("anniversary", "Next major anniversary"),
+              "",
+            ]}
+          >
             {employees.map((e) => {
               const milestone = e.start_date ? nextMilestone(e.start_date, today) : null;
               return (
