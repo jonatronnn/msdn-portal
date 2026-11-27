@@ -4,6 +4,7 @@ import {
   formatPay,
   formatSortCode,
   missingEmploymentDetails,
+  nextPayrollId,
   normaliseAccountNumber,
   normaliseNiNumber,
   normaliseSortCode,
@@ -81,5 +82,19 @@ describe("bank details", () => {
     expect(formatPay(12.6, "hourly")).toBe("£12.60 per hour");
     expect(formatPay(28000, "annual")).toBe("£28,000.00 per year");
     expect(formatPay(null, "hourly")).toBe("");
+  });
+});
+
+describe("nextPayrollId", () => {
+  it("starts at PR070", () => {
+    expect(nextPayrollId([])).toBe("PR070");
+    expect(nextPayrollId([null, "PR012"])).toBe("PR070");
+  });
+  it("follows the highest PR number", () => {
+    expect(nextPayrollId(["PR070", "PR075", "pr071"])).toBe("PR076");
+    expect(nextPayrollId(["PR999"])).toBe("PR1000");
+  });
+  it("ignores IDs in other formats", () => {
+    expect(nextPayrollId(["12345", "PR07X", "PR080"])).toBe("PR081");
   });
 });

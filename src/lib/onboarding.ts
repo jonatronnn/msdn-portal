@@ -7,7 +7,7 @@ import { env } from "@/lib/env";
 import { missingEmploymentDetails } from "@/lib/staff";
 
 type Client = SupabaseClient<Database>;
-export type Automation = "form_sent" | "form_returned" | "employment_details" | "contract_uploaded" | "payroll_ref" | "famly";
+export type Automation = "form_sent" | "form_returned" | "employment_details" | "contract_uploaded" | "famly";
 
 export const STARTER_LINK_DAYS = 14;
 
@@ -32,7 +32,6 @@ export async function checkRecordAutomations(db: Client, employeeId: string, byN
   const { data: e } = await db.from("employees").select("*").eq("id", employeeId).single();
   if (!e) return;
   if (missingEmploymentDetails(e).length === 0) await completeAutomation(db, employeeId, "employment_details", byName);
-  if (e.payroll_id) await completeAutomation(db, employeeId, "payroll_ref", byName);
 }
 
 // Emails the employee a one-off link to the Important information form. Any

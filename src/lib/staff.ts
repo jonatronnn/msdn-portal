@@ -30,6 +30,14 @@ export function normaliseIdNumber(value: string | null) {
   return value ? value.replace(/\s+/g, "").toUpperCase() : null;
 }
 
+// New starters get the next employee / payroll ID: PR070, PR071 and so on.
+const FIRST_PAYROLL_NUMBER = 70;
+export function nextPayrollId(existing: (string | null)[]) {
+  const numbers = existing.map((id) => /^PR(\d+)$/i.exec(id ?? "")?.[1]).filter(Boolean).map(Number);
+  const next = Math.max(FIRST_PAYROLL_NUMBER - 1, ...numbers) + 1;
+  return `PR${String(next).padStart(3, "0")}`;
+}
+
 export function fullName(e: { first_name: string; last_name: string }) {
   return `${e.first_name} ${e.last_name}`;
 }
