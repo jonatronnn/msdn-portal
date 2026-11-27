@@ -1,6 +1,7 @@
 import { daysBetween, nextMilestone } from "@/lib/dates";
+import { SALARIED_TITLES } from "@/lib/pay";
 
-export const QUALIFICATION_LEVELS = ["Unqualified", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7"];
+export const QUALIFICATION_LEVELS = ["Unqualified", "Level 2", "Level 3"];
 
 // Blank means not specified.
 export const GENDERS = ["Male", "Female", "Non-binary"];
@@ -155,6 +156,7 @@ type EmploymentDetails = {
   pay_rate_basis: string | null;
   qualification_level: string | null;
   qualification_date: string | null;
+  apprenticeship_start_date: string | null;
 };
 
 // The manager-entered details that are still blank. When this is empty the
@@ -168,7 +170,9 @@ export function missingEmploymentDetails(e: EmploymentDetails) {
   if (!e.notice_period) missing.push("notice period");
   if (!e.working_pattern) missing.push("working pattern");
   if (e.contracted_hours == null) missing.push("contracted hours");
-  if (e.pay_rate == null || !e.pay_rate_basis) missing.push("pay rate");
+  // Hourly rates come from Admin > Pay rates; only salaries are entered by hand.
+  if (SALARIED_TITLES.includes(e.job_title ?? "") && e.pay_rate == null) missing.push("salary");
+  if (e.job_title === "Apprentice" && !e.apprenticeship_start_date) missing.push("apprenticeship start date");
   if (!e.qualification_level) missing.push("qualification level");
   if (e.qualification_level && e.qualification_level !== "Unqualified" && !e.qualification_date) {
     missing.push("qualification date");

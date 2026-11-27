@@ -2,6 +2,7 @@ import { ActionForm } from "@/components/action-form";
 import { Card, Field, Input, PageHeader } from "@/components/ui";
 import { requireSession } from "@/lib/auth";
 import { addNewStarter } from "@/app/(portal)/staff/actions";
+import { JobTitleSelect } from "@/app/(portal)/staff/employee-form";
 import { nextPayrollId } from "@/lib/staff";
 import { createClient } from "@/lib/supabase/server";
 
@@ -26,7 +27,7 @@ export default async function NewStarterPage() {
               <Input name="email" type="email" required />
             </Field>
             <Field label="Job title">
-              <Input name="job_title" />
+              <JobTitleSelect />
             </Field>
             <Field label="Start date">
               <Input name="start_date" type="date" />

@@ -9,6 +9,8 @@ const automationNames: Record<string, string> = {
   form_returned: "when the starter returns the form",
   employment_details: "when all employment details are filled in",
   contract_uploaded: "when a signed contract is uploaded",
+  right_to_work: "when right to work evidence is uploaded",
+  dbs: "when a DBS certificate is uploaded",
 };
 
 export default async function SettingsPage() {

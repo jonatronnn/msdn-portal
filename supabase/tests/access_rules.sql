@@ -81,6 +81,8 @@ select pg_temp.expect((select count(*) from employee_medical), 1::bigint, 'owner
 insert into training_types (name, validity_months) values ('Owner course', 12);
 insert into onboarding_task_templates (title) values ('Owner step');
 insert into child_checklist_templates (title) values ('Owner child step');
+update pay_rates set rate = 13.50 where key = 'senior';
+select pg_temp.expect((select rate from pay_rates where key = 'senior'), 13.50::numeric, 'owner changes a pay rate');
 select pg_temp.sign_out();
 
 -- Owner without two-factor sign-in gets nothing ------------------------------
@@ -90,6 +92,7 @@ select pg_temp.expect((select count(*) from employees), 0::bigint, 'aal1 owner s
 select pg_temp.expect((select count(*) from employee_bank_details), 0::bigint, 'aal1 owner sees no bank details');
 select pg_temp.expect((select count(*) from employee_medical), 0::bigint, 'aal1 owner sees no medical details');
 select pg_temp.expect((select count(*) from children), 0::bigint, 'aal1 owner sees no children');
+select pg_temp.expect((select count(*) from pay_rates), 0::bigint, 'aal1 owner sees no pay rates');
 select pg_temp.sign_out();
 
 -- Manager --------------------------------------------------------------------
@@ -105,6 +108,9 @@ select pg_temp.expect((select count(*) from employee_id_numbers), 1::bigint, 'ma
 insert into employee_id_numbers (employee_id, encrypted) values ('10000000-0000-0000-0000-000000000002', 'x');
 select pg_temp.expect((select count(*) from employee_medical), 1::bigint, 'manager sees medical details');
 insert into employee_medical (employee_id, blood_type) values ('10000000-0000-0000-0000-000000000002', 'O+');
+select pg_temp.expect((select count(*) from pay_rates), 10::bigint, 'manager reads pay rates');
+update pay_rates set rate = 99 where key = 'senior';
+select pg_temp.expect((select rate from pay_rates where key = 'senior'), 13.50::numeric, 'manager cannot change pay rates');
 select pg_temp.expect((select count(*) from contracts), 1::bigint, 'manager sees contracts');
 select pg_temp.expect((select count(*) from employee_training), 1::bigint, 'manager sees training records');
 select pg_temp.expect((select count(*) from onboarding_tasks), 1::bigint, 'manager sees onboarding tasks');

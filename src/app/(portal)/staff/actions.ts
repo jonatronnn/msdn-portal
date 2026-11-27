@@ -19,6 +19,7 @@ import {
 } from "@/lib/famly";
 import { changesFromFamly, currentQualification, type FamlyQualification, fromFamly, toFamly } from "@/lib/famly-mapping";
 import { checkRecordAutomations, completeAutomation, sendStarterForm } from "@/lib/onboarding";
+import { JOB_TITLES, SALARIED_TITLES } from "@/lib/pay";
 import {
   CONTRACT_TYPES,
   GENDERS,
@@ -44,12 +45,14 @@ function number(formData: FormData, key: string) {
 
 // Fields managers enter (M), plus the employee ID (O).
 function employmentFields(formData: FormData) {
+  const jobTitle = text(formData, "job_title");
+  const salaried = SALARIED_TITLES.includes(jobTitle ?? "");
   return {
     first_name: text(formData, "first_name") ?? "",
     middle_name: text(formData, "middle_name"),
     last_name: text(formData, "last_name") ?? "",
     email: text(formData, "email")?.toLowerCase() ?? "",
-    job_title: text(formData, "job_title"),
+    job_title: jobTitle,
     start_date: text(formData, "start_date"),
     contract_type: text(formData, "contract_type"),
     contract_end_date: text(formData, "contract_end_date"),
@@ -57,8 +60,12 @@ function employmentFields(formData: FormData) {
     probation_end_date: text(formData, "probation_end_date"),
     working_pattern: text(formData, "working_pattern"),
     contracted_hours: number(formData, "contracted_hours"),
-    pay_rate: number(formData, "pay_rate"),
-    pay_rate_basis: text(formData, "pay_rate_basis"),
+    // Only salaries are stored; hourly rates come from Admin > Pay rates.
+    pay_rate: salaried ? number(formData, "pay_rate") : null,
+    pay_rate_basis: salaried ? "annual" : null,
+    is_dsl: formData.get("is_dsl") === "on",
+    is_senco: formData.get("is_senco") === "on",
+    apprenticeship_start_date: jobTitle === "Apprentice" ? text(formData, "apprenticeship_start_date") : null,
     qualification_level: text(formData, "qualification_level"),
     qualification_date: text(formData, "qualification_date"),
     payroll_id: text(formData, "payroll_id"),
@@ -94,10 +101,10 @@ function checkEmployment(f: ReturnType<typeof employmentFields>) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email)) return { error: "Enter a valid email address." };
   if (f.contract_type && !CONTRACT_TYPES.includes(f.contract_type)) return { error: "Choose a contract type." };
   if (f.qualification_level && !QUALIFICATION_LEVELS.includes(f.qualification_level)) return { error: "Choose a qualification level." };
-  if (f.pay_rate_basis && !["hourly", "annual"].includes(f.pay_rate_basis)) return { error: "Choose hourly or annual pay." };
+  if (f.job_title && !JOB_TITLES.includes(f.job_title)) return { error: "Choose a job title." };
   for (const [key, label] of [
     ["contracted_hours", "Contracted hours"],
-    ["pay_rate", "Pay rate"],
+    ["pay_rate", "Salary"],
   ] as const) {
     const value = f[key];
     if (value != null && !(Number.isFinite(value) && value > 0)) return { error: `${label} must be a number above 0.` };

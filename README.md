@@ -31,12 +31,22 @@ storage and are only handed out as one-minute links.
 
 ## What's in the Staff module
 
+- **Pay rates** (owner only, under Admin) – hourly rates by age band (under 18
+  or apprentice, 18 to 20, 21 and over) and qualification level, flat rates for
+  Room Leaders and Senior Practitioners, and DSL and SENCo extras. Each hourly
+  person's rate is worked out from these and their date of birth, so it moves
+  on the birthday that takes them into a new band. Apprentices move to the rate
+  for their age once they are 19 and past their first year; the dashboard
+  flags this. Managers and Deputy Managers are salaried; Directors have no pay.
+  Rates under the minimum wage are flagged (update `MINIMUM_WAGE` in
+  `src/lib/pay.ts` each April).
 - **Directory** – current staff with length of service (years and months)
   and how long until their next major work anniversary (1, 5, 10, 15 or 20
   years). Former staff are in the **Archive**, with leave date and reason.
 - **Staff records** – the details managers enter (name, email, job title, start
   date, contract type / end date / notice period / probation, working pattern,
-  contracted hours, pay rate, qualification level and date), the details the
+  contracted hours, salary for managers, qualification level and date, DSL and
+  SENCo, apprenticeship start), the details the
   employee gives on their form (name, nickname, gender, date of birth,
   nationality, place of birth, mobile and home phone, home address, emergency
   contact, NI number, passport and driving licence numbers, medical details,

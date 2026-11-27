@@ -3,7 +3,8 @@ import { Icon, type IconName } from "@/components/icons";
 import { Badge, Card, Empty, PageHeader } from "@/components/ui";
 import { requireSession } from "@/lib/auth";
 import { addDays, formatDate, formatTimeUntil, isCurrentEmployee, nextBirthday, nextMilestone, todayInLondon } from "@/lib/dates";
-import { fullName } from "@/lib/staff";
+import { apprenticeRateEnds, hourlyPay } from "@/lib/pay";
+import { formatPay, fullName } from "@/lib/staff";
 import { createClient } from "@/lib/supabase/server";
 import { EmailList } from "./email-list";
 
@@ -16,14 +17,21 @@ export default async function Dashboard() {
   const today = todayInLondon();
   const horizon = addDays(today, LOOKAHEAD_DAYS);
 
-  const [{ data: employees }, { data: openTasks }, { data: training }] = await Promise.all([
-    supabase.from("employees").select("id, first_name, last_name, email, start_date, leave_date, date_of_birth").order("last_name").order("first_name"),
+  const [{ data: employees }, { data: openTasks }, { data: training }, { data: payRates }] = await Promise.all([
+    supabase
+      .from("employees")
+      .select(
+        "id, first_name, last_name, email, start_date, leave_date, date_of_birth, job_title, qualification_level, is_dsl, is_senco, apprenticeship_start_date",
+      )
+      .order("last_name")
+      .order("first_name"),
     supabase.from("onboarding_tasks").select("employee_id").is("completed_at", null),
     supabase
       .from("employee_training")
       .select("id, employee_id, expires_on, training_types(name)")
       .lte("expires_on", horizon)
       .order("expires_on"),
+    supabase.from("pay_rates").select("key, rate"),
   ]);
 
   const current = (employees ?? []).filter((e) => isCurrentEmployee(e, today));
@@ -42,6 +50,18 @@ export default async function Dashboard() {
     .flatMap((e) => {
       const b = e.date_of_birth ? nextBirthday(e.date_of_birth, today) : null;
       return b && b.date <= horizon ? [{ id: e.id, name: fullName(e), ...b }] : [];
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  // Apprentices due to move from the apprentice rate to the rate for their age.
+  const rates = Object.fromEntries((payRates ?? []).map((r) => [r.key, Number(r.rate)]));
+  const apprentices = current
+    .flatMap((e) => {
+      const date = e.job_title === "Apprentice" ? apprenticeRateEnds(e) : null;
+      // Shown from 60 days before until 60 days after the change.
+      if (!date || date > horizon || date < addDays(today, -LOOKAHEAD_DAYS)) return [];
+      const pay = hourlyPay(e, rates, date);
+      return [{ id: e.id, name: fullName(e), date, rate: pay && "rate" in pay ? pay.rate : null }];
     })
     .sort((a, b) => a.date.localeCompare(b.date));
 
@@ -114,6 +134,27 @@ export default async function Dashboard() {
           )}
         </Card>
       </div>
+
+      {apprentices.length > 0 && (
+        <Card title="Apprentice pay rates to change">
+          <ul className="divide-y divide-stone-100 text-sm">
+            {apprentices.map((a) => (
+              <li key={a.id} className="flex flex-wrap items-center gap-3 py-2">
+                <span className="w-28 text-stone-500">{formatDate(a.date)}</span>
+                <Link href={`/staff/${a.id}`} className="font-medium text-brand-800 hover:underline">
+                  {a.name}
+                </Link>
+                <Badge tone={a.date <= today ? "red" : "amber"}>
+                  {a.date <= today ? "Now due" : "Due"} {a.rate != null ? formatPay(a.rate, "hourly") : "the rate for their age"}
+                </Badge>
+                <span className="text-stone-500">
+                  {a.date <= today ? "19+ and past their first year" : formatTimeUntil(today, a.date)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <section id="training">
         <Card title="Training to renew">

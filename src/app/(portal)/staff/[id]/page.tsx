@@ -7,6 +7,7 @@ import { decryptJson } from "@/lib/crypto";
 import { addDays, formatDate, formatDateNumeric, formatLengthOfService, formatTimeUntil, isCurrentEmployee, nextMilestone, todayInLondon } from "@/lib/dates";
 import { env } from "@/lib/env";
 import { type BankDetails, formatAddress, type IdNumbers, LEAVE_REASONS, formatNiNumber, formatPay, formatSortCode, missingEmploymentDetails, SIGNED_DOCUMENTS } from "@/lib/staff";
+import { hourlyPay, UNPAID_TITLES } from "@/lib/pay";
 import { createClient } from "@/lib/supabase/server";
 import type { ShiftDay } from "@/lib/wages";
 import {
@@ -54,6 +55,7 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
     { data: patterns },
     { data: medical },
     { data: idRow },
+    { data: payRates },
   ] = await Promise.all([
       supabase.from("starter_form_links").select("*").eq("employee_id", id).order("sent_at", { ascending: false }).limit(1),
       supabase
@@ -70,6 +72,7 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
       supabase.from("shift_patterns").select("id, effective_from, week_a_from, created_by_name, shift_pattern_days(*)").eq("employee_id", id),
       supabase.from("employee_medical").select("*").eq("employee_id", id).maybeSingle(),
       supabase.from("employee_id_numbers").select("*").eq("employee_id", id).maybeSingle(),
+      supabase.from("pay_rates").select("key, rate"),
     ]);
 
   // Signed documents: one row per expected document, plus anything uploaded under another title.
@@ -82,6 +85,14 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
     const name = SIGNED_DOCUMENTS.find((d) => d.automation && d.automation === automation)?.name;
     return name ? contracts?.find((c) => c.title === name) : undefined;
   };
+
+  const unpaid = UNPAID_TITLES.includes(e.job_title ?? "");
+  const hourly = hourlyPay(e, Object.fromEntries((payRates ?? []).map((r) => [r.key, Number(r.rate)])), today);
+  const payText = hourly
+    ? "rate" in hourly
+      ? `${formatPay(hourly.rate, "hourly")} (${hourly.basis})`
+      : `Add their ${hourly.missing} to work this out`
+    : formatPay(e.pay_rate, e.pay_rate_basis);
 
   const current = isCurrentEmployee(e, today);
   const missing = missingEmploymentDetails(e);
@@ -225,7 +236,11 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
             ["Probation ends", formatDate(e.probation_end_date)],
             ["Working pattern", e.working_pattern],
             ["Contracted hours", e.contracted_hours != null && `${e.contracted_hours} per week`],
-            ["Pay rate", formatPay(e.pay_rate, e.pay_rate_basis)],
+            ...(unpaid ? [] : ([["Pay rate", payText]] as [string, string][])),
+            ["Safeguarding and SEND", [e.is_dsl && "DSL", e.is_senco && "SENCo"].filter(Boolean).join(", ")],
+            ...(e.job_title === "Apprentice"
+              ? ([["Apprenticeship started", formatDate(e.apprenticeship_start_date)]] as [string, string][])
+              : []),
             [
               "Qualification",
               e.qualification_level && [e.qualification_level, formatDate(e.qualification_date)].filter(Boolean).join(", "),
