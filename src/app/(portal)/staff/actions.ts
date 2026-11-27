@@ -5,14 +5,25 @@ import { redirect } from "next/navigation";
 import { failed, text, type ActionState } from "@/lib/action-state";
 import { actorName, requireSession } from "@/lib/auth";
 import { encryptJson } from "@/lib/crypto";
-import { addMonths } from "@/lib/dates";
+import { addMonths, todayInLondon } from "@/lib/dates";
 import { env } from "@/lib/env";
-import { createFamlyEmployee, listFamlyEmployees, listFamlyRooms, updateFamlyEmployee } from "@/lib/famly";
-import { fromFamly, toFamly } from "@/lib/famly-mapping";
+import {
+  assignFamlyQualification,
+  createFamlyEmployee,
+  getFamlyEmployee,
+  listFamlyEmployees,
+  listFamlyQualificationTypes,
+  listFamlyRooms,
+  updateFamlyEmployee,
+} from "@/lib/famly";
+import { changesFromFamly, currentQualification, type FamlyQualification, fromFamly, toFamly } from "@/lib/famly-mapping";
 import { checkRecordAutomations, completeAutomation, sendStarterForm } from "@/lib/onboarding";
 import {
   CONTRACT_TYPES,
+  GENDERS,
+  medicalFields,
   NI_NUMBER_ERROR,
+  normaliseIdNumber,
   normaliseAccountNumber,
   normaliseNiNumber,
   normaliseSortCode,
@@ -31,6 +42,7 @@ function number(formData: FormData, key: string) {
 function employmentFields(formData: FormData) {
   return {
     first_name: text(formData, "first_name") ?? "",
+    middle_name: text(formData, "middle_name"),
     last_name: text(formData, "last_name") ?? "",
     email: text(formData, "email")?.toLowerCase() ?? "",
     job_title: text(formData, "job_title"),
@@ -54,7 +66,12 @@ function personalFields(formData: FormData) {
   const ni = text(formData, "ni_number");
   return {
     date_of_birth: text(formData, "date_of_birth"),
+    gender: text(formData, "gender"),
+    nickname: text(formData, "nickname"),
+    nationality: text(formData, "nationality"),
+    place_of_birth: text(formData, "place_of_birth"),
     mobile_phone: text(formData, "mobile_phone"),
+    home_phone: text(formData, "home_phone"),
     address_line1: text(formData, "address_line1"),
     address_line2: text(formData, "address_line2"),
     town: text(formData, "town"),
@@ -62,7 +79,9 @@ function personalFields(formData: FormData) {
     emergency_contact_name: text(formData, "emergency_contact_name"),
     emergency_contact_relationship: text(formData, "emergency_contact_relationship"),
     emergency_contact_phone: text(formData, "emergency_contact_phone"),
+    emergency_contact_address: text(formData, "emergency_contact_address"),
     ni_number: ni && (normaliseNiNumber(ni) ?? ni),
+    special_notes: text(formData, "special_notes"),
   };
 }
 
@@ -84,6 +103,7 @@ function checkEmployment(f: ReturnType<typeof employmentFields>) {
 
 function checkPersonal(f: ReturnType<typeof personalFields>) {
   if (f.ni_number && !normaliseNiNumber(f.ni_number)) return { error: NI_NUMBER_ERROR };
+  if (f.gender && !GENDERS.includes(f.gender)) return { error: "Choose a gender." };
   return null;
 }
 
@@ -156,6 +176,10 @@ export async function updateEmployee(id: string, _: ActionState, formData: FormD
   const supabase = await createClient();
   const { error } = await supabase.from("employees").update({ ...employment, ...personal }).eq("id", id);
   if (error) return failed(error);
+  const { error: medicalError } = await supabase
+    .from("employee_medical")
+    .upsert({ employee_id: id, ...medicalFields(formData), updated_at: new Date().toISOString(), updated_by_name: actorName(session) });
+  if (medicalError) return failed(medicalError);
   await checkRecordAutomations(supabase, id, actorName(session));
   await refreshOpenMonthsFor(supabase, id, actorName(session));
   redirect(`/staff/${id}`);
@@ -215,6 +239,24 @@ export async function saveBankDetails(id: string, _: ActionState, formData: Form
   await supabase.from("employees").update({ bank_details_received_at: new Date().toISOString() }).eq("id", id);
   revalidatePath(`/staff/${id}`);
   return { message: "Bank details saved." };
+}
+
+export async function saveIdNumbers(id: string, _: ActionState, formData: FormData): Promise<ActionState> {
+  const session = await requireSession();
+  const passportNumber = normaliseIdNumber(text(formData, "passport_number"));
+  const drivingLicenceNumber = normaliseIdNumber(text(formData, "driving_licence_number"));
+  if (!passportNumber && !drivingLicenceNumber) return { error: "Enter a passport or driving licence number." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("employee_id_numbers").upsert({
+    employee_id: id,
+    encrypted: encryptJson({ passportNumber, drivingLicenceNumber }, env.bankDetailsKey()),
+    updated_at: new Date().toISOString(),
+    updated_by_name: actorName(session),
+  });
+  if (error) return failed(error);
+  revalidatePath(`/staff/${id}`);
+  return { message: "ID numbers saved." };
 }
 
 export async function addTraining(id: string, _: ActionState, formData: FormData): Promise<ActionState> {
@@ -312,6 +354,24 @@ export async function removeTask(id: string, taskId: string) {
   revalidatePath(`/staff/${id}`);
 }
 
+type QualificationDetails = { qualification_level: string | null; qualification_date: string | null };
+
+// Sends their portal qualification level to Famly if it differs from what
+// Famly shows. Returns a note when Famly has no type of that name.
+async function sendQualification(famlyId: string, siteId: string, e: QualificationDetails, current: FamlyQualification[]) {
+  if (!e.qualification_level) return "";
+  const today = todayInLondon();
+  const q = currentQualification(current, today);
+  const from = e.qualification_date ?? today;
+  if (q?.qualificationType.name === e.qualification_level && (!e.qualification_date || q.validFrom === from)) return "";
+  const type = (await listFamlyQualificationTypes(siteId)).find(
+    (t) => t.name.trim().toLowerCase() === e.qualification_level!.toLowerCase(),
+  );
+  if (!type) return ` Famly has no qualification called "${e.qualification_level}", so that wasn't sent.`;
+  await assignFamlyQualification(famlyId, type.qualificationTypeId, from);
+  return "";
+}
+
 export async function addToFamly(id: string, _: ActionState, formData: FormData): Promise<ActionState> {
   const session = await requireSession();
   const supabase = await createClient();
@@ -320,36 +380,74 @@ export async function addToFamly(id: string, _: ActionState, formData: FormData)
   if (e.famly_id) return { error: "Already in Famly." };
   if (!e.start_date) return { error: "Add their start date first: Famly needs it." };
 
+  let famlyId: string;
+  let room;
   try {
-    const room = (await listFamlyRooms()).find((r) => r.id === formData.get("room_id"));
+    room = (await listFamlyRooms()).find((r) => r.id === formData.get("room_id"));
     if (!room) return { error: "Choose their room." };
-    const famlyId = await createFamlyEmployee(toFamly(e), room);
-    await supabase
-      .from("employees")
-      .update({ famly_id: famlyId, famly_group_id: room.id, famly_synced_at: new Date().toISOString() })
-      .eq("id", id);
+    famlyId = await createFamlyEmployee(toFamly(e), room);
   } catch {
     return { error: "Couldn't add them to Famly. Please try again." };
   }
+  await supabase
+    .from("employees")
+    .update({ famly_id: famlyId, famly_group_id: room.id, famly_synced_at: new Date().toISOString() })
+    .eq("id", id);
   await completeAutomation(supabase, id, "famly", actorName(session));
   revalidatePath(`/staff/${id}`);
-  return { message: "Added to Famly." };
+  try {
+    return { message: `Added to Famly.${await sendQualification(famlyId, room.institutionId, e, [])}` };
+  } catch {
+    return { message: "Added to Famly, but their qualification couldn't be sent. Try Send changes to Famly." };
+  }
 }
 
-export async function sendChangesToFamly(id: string, _: ActionState): Promise<ActionState> {
+export async function sendChangesToFamly(id: string, _: ActionState, formData: FormData): Promise<ActionState> {
   await requireSession();
   const supabase = await createClient();
   const { data: e } = await supabase.from("employees").select("*").eq("id", id).single();
   if (!e?.famly_id) return { error: "They aren't linked to Famly yet." };
+  const roomId = text(formData, "room_id");
 
+  let note: string;
   try {
-    await updateFamlyEmployee(e.famly_id, toFamly(e));
+    await updateFamlyEmployee(e.famly_id, toFamly(e), roomId !== e.famly_group_id ? roomId : null);
+    const f = await getFamlyEmployee(e.famly_id);
+    note = f ? await sendQualification(e.famly_id, f.siteId, e, f.qualificationTypeAssignments) : "";
   } catch {
     return { error: "Couldn't update Famly. Please try again." };
   }
-  await supabase.from("employees").update({ famly_synced_at: new Date().toISOString() }).eq("id", id);
+  await supabase
+    .from("employees")
+    .update({ famly_group_id: roomId ?? e.famly_group_id, famly_synced_at: new Date().toISOString() })
+    .eq("id", id);
   revalidatePath(`/staff/${id}`);
-  return { message: "Famly updated." };
+  return { message: `Famly updated.${note}` };
+}
+
+// Copies their current Famly details over the portal record. Anything blank
+// in Famly is left as it is in the portal.
+export async function getChangesFromFamly(id: string, _: ActionState): Promise<ActionState> {
+  await requireSession();
+  const supabase = await createClient();
+  const { data: e } = await supabase.from("employees").select("famly_id").eq("id", id).single();
+  if (!e?.famly_id) return { error: "They aren't linked to Famly yet." };
+
+  let f;
+  try {
+    f = await getFamlyEmployee(e.famly_id);
+  } catch {
+    return { error: "Couldn't reach Famly. Please try again." };
+  }
+  if (!f) return { error: "They're no longer in Famly." };
+
+  const { error } = await supabase
+    .from("employees")
+    .update({ ...changesFromFamly(f, todayInLondon()), famly_synced_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) return failed(error);
+  revalidatePath(`/staff/${id}`);
+  return { message: "Updated from Famly." };
 }
 
 // Brings the chosen Famly staff into the portal. Anyone already here with the
@@ -370,11 +468,12 @@ export async function importFromFamly(_: ActionState, formData: FormData): Promi
 
   const supabase = await createClient();
   const { data: existing } = await supabase.from("employees").select("id, email, famly_id");
+  const today = todayInLondon();
   let imported = 0;
   let linked = 0;
   const skipped: string[] = [];
   for (const f of famlyStaff) {
-    const fields = fromFamly(f);
+    const fields = fromFamly(f, today);
     if (existing?.some((e) => e.famly_id === f.id)) continue;
     if (!fields.email) {
       skipped.push(`${fields.first_name} (no email in Famly)`);

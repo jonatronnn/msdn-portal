@@ -37,8 +37,12 @@ storage and are only handed out as one-minute links.
 - **Staff records** – the details managers enter (name, email, job title, start
   date, contract type / end date / notice period / probation, working pattern,
   contracted hours, pay rate, qualification level and date), the details the
-  employee gives on their form (date of birth, mobile, home address, emergency
-  contact, NI number, bank details) and the payroll reference added afterwards.
+  employee gives on their form (name, nickname, gender, date of birth,
+  nationality, place of birth, mobile and home phone, home address, emergency
+  contact, NI number, passport and driving licence numbers, medical details,
+  bank details, additional information) and the payroll reference added
+  afterwards. Bank details are owner-only; ID numbers and medical details are
+  for owners and managers. Bank details and ID numbers are encrypted.
   The record lists anything still to add. Employment is ended from the record
   (leave date and reason), which moves them to the archive after that date.
 - **Training** – first aid, safeguarding, FGM awareness and so on, with
@@ -57,10 +61,15 @@ storage and are only handed out as one-minute links.
   tick who to bring across (optionally as new starters, with the checklist).
   Anyone already in the portal with the same email is linked, not duplicated.
   On a staff record, *Add to Famly* creates them in Famly (you choose their
-  room) and *Send changes to Famly* updates their name, email, job title, date
-  of birth, mobile, address and start/leave dates. Only these fields are
-  sent, so their Famly app role and holiday allowance are never touched. The
-  "Added to Famly" checklist step ticks itself. Needs `FAMLY_API_TOKEN`.
+  room). Once linked, *Send changes to Famly* and *Get changes from Famly* sync
+  their name (first, middle, last), email, job title, date of birth, gender,
+  mobile, address, room, qualification level and start/leave dates; a blank
+  field never wipes the other side. Their Famly app role and holiday allowance
+  are never touched. Qualification levels match Famly qualification types by
+  name (e.g. "Level 3"). Nickname, nationality, medical details, ID numbers and
+  special notes stay in the portal. The "Added to Famly" checklist step ticks
+  itself. Needs `FAMLY_API_TOKEN`, with permission to read and update
+  employees and to see sensitive staff information (for gender).
 - **Dashboard** – major anniversaries and training to renew in the next 60
   days, who is being onboarded, and an **email list**: tick current staff (or
   select all) to get their addresses ready to paste into an email.

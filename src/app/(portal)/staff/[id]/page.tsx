@@ -4,9 +4,9 @@ import { Toggle } from "@/components/toggle";
 import { Badge, Card, DetailList, Empty, Field, Input, LinkButton, PageHeader, Select, Table, Td, Textarea } from "@/components/ui";
 import { isOwner, requireSession } from "@/lib/auth";
 import { decryptJson } from "@/lib/crypto";
-import { addDays, formatDate, formatLengthOfService, formatTimeUntil, isCurrentEmployee, nextMilestone, todayInLondon } from "@/lib/dates";
+import { addDays, formatDate, formatDateNumeric, formatLengthOfService, formatTimeUntil, isCurrentEmployee, nextMilestone, todayInLondon } from "@/lib/dates";
 import { env } from "@/lib/env";
-import { type BankDetails, formatAddress, formatNiNumber, formatPay, formatSortCode, fullName, missingEmploymentDetails } from "@/lib/staff";
+import { type BankDetails, formatAddress, type IdNumbers, formatNiNumber, formatPay, formatSortCode, missingEmploymentDetails } from "@/lib/staff";
 import { MAX_FILE_MB } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import type { ShiftDay } from "@/lib/wages";
@@ -19,6 +19,7 @@ import {
   removeTask,
   removeTraining,
   saveBankDetails,
+  saveIdNumbers,
   sendStarterFormAction,
   setTaskDone,
   uploadContract,
@@ -43,8 +44,17 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
   const { data: e } = await supabase.from("employees").select("*").eq("id", id).maybeSingle();
   if (!e) notFound();
 
-  const [{ data: links }, { data: training }, { data: trainingTypes }, { data: contracts }, { data: tasks }, { data: bank }, { data: patterns }] =
-    await Promise.all([
+  const [
+    { data: links },
+    { data: training },
+    { data: trainingTypes },
+    { data: contracts },
+    { data: tasks },
+    { data: bank },
+    { data: patterns },
+    { data: medical },
+    { data: idRow },
+  ] = await Promise.all([
       supabase.from("starter_form_links").select("*").eq("employee_id", id).order("sent_at", { ascending: false }).limit(1),
       supabase
         .from("employee_training")
@@ -58,6 +68,8 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
         ? supabase.from("employee_bank_details").select("*").eq("employee_id", id).maybeSingle()
         : Promise.resolve({ data: null }),
       supabase.from("shift_patterns").select("id, effective_from, week_a_from, created_by_name, shift_pattern_days(*)").eq("employee_id", id),
+      supabase.from("employee_medical").select("*").eq("employee_id", id).maybeSingle(),
+      supabase.from("employee_id_numbers").select("*").eq("employee_id", id).maybeSingle(),
     ]);
 
   const current = isCurrentEmployee(e, today);
@@ -78,9 +90,18 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
     }
   }
 
+  let idNumbers: IdNumbers | null = null;
+  if (idRow) {
+    try {
+      idNumbers = decryptJson<IdNumbers>(idRow.encrypted, env.bankDetailsKey());
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   return (
     <>
-      <PageHeader title={fullName(e)}>
+      <PageHeader title={[e.first_name, e.middle_name, e.last_name].filter(Boolean).join(" ")}>
         <LinkButton href={`/staff/${id}/edit`} variant="primary">
           Edit details
         </LinkButton>
@@ -164,16 +185,28 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
       <Card title="Personal details">
         <DetailList
           items={[
+            ["Nickname", e.nickname],
             ["Email", e.email],
             ["Mobile", e.mobile_phone],
-            ["Date of birth", formatDate(e.date_of_birth)],
+            ["Home phone", e.home_phone],
+            ["Date of birth", formatDateNumeric(e.date_of_birth)],
+            ["Gender", e.gender ?? "Not specified"],
+            ["Nationality", e.nationality],
+            ["Place of birth", e.place_of_birth],
             ["National Insurance number", formatNiNumber(e.ni_number)],
             ["Home address", formatAddress(e)],
             [
               "Emergency contact",
               e.emergency_contact_name &&
-                `${e.emergency_contact_name}${e.emergency_contact_relationship ? ` (${e.emergency_contact_relationship})` : ""}, ${e.emergency_contact_phone ?? ""}`,
+                [
+                  `${e.emergency_contact_name}${e.emergency_contact_relationship ? ` (${e.emergency_contact_relationship})` : ""}`,
+                  e.emergency_contact_phone,
+                  e.emergency_contact_address,
+                ]
+                  .filter(Boolean)
+                  .join(", "),
             ],
+            ["Special notes", e.special_notes && <span className="whitespace-pre-line">{e.special_notes}</span>],
           ]}
         />
       </Card>
@@ -221,6 +254,50 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
             </details>
           </>
         )}
+      </Card>
+
+      <Card title="Medical information">
+        <p className="mb-4 text-xs text-stone-500">Seen by owners and managers only. Never sent to Famly. Changed on Edit details.</p>
+        <DetailList
+          items={[
+            ["Doctor", medical && [medical.doctor_name, medical.doctor_phone, medical.doctor_address].filter(Boolean).join(", ")],
+            ["Blood type", medical?.blood_type],
+            ["Medical conditions", medical?.medical_conditions && <span className="whitespace-pre-line">{medical.medical_conditions}</span>],
+            ["Allergies", medical?.allergies && <span className="whitespace-pre-line">{medical.allergies}</span>],
+          ]}
+        />
+      </Card>
+
+      <Card title="Passport and driving licence">
+        <p className="mb-4 text-xs text-stone-500">Seen by owners and managers only, and stored encrypted.</p>
+        {idRow && !idNumbers && <p className="mb-4 text-sm text-red-700">These numbers can&apos;t be read. Check BANK_DETAILS_KEY.</p>}
+        {idNumbers && idRow ? (
+          <div className="mb-4">
+            <DetailList
+              items={[
+                ["Passport number", idNumbers.passportNumber],
+                ["Driving licence number", idNumbers.drivingLicenceNumber],
+              ]}
+            />
+            <p className="mt-2 text-xs text-stone-500">
+              Last updated {formatTimestamp(idRow.updated_at)}
+              {idRow.updated_by_name && ` by ${idRow.updated_by_name}`}.
+            </p>
+          </div>
+        ) : (
+          !idRow && <p className="mb-4 text-sm text-stone-600">Not provided yet.</p>
+        )}
+        <details>
+          <summary className="cursor-pointer text-sm text-brand-700">{idNumbers ? "Change numbers" : "Enter numbers"}</summary>
+          <ActionForm action={saveIdNumbers.bind(null, id)} submitLabel="Save numbers" className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Field label="Passport number">
+              <Input name="passport_number" autoComplete="off" defaultValue={idNumbers?.passportNumber ?? ""} />
+            </Field>
+            <Field label="Driving licence number">
+              <Input name="driving_licence_number" autoComplete="off" defaultValue={idNumbers?.drivingLicenceNumber ?? ""} />
+            </Field>
+          </ActionForm>
+        </details>
       </Card>
 
       <Card title="Training">

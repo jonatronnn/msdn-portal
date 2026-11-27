@@ -5,11 +5,22 @@ import { text, type ActionState } from "@/lib/action-state";
 import { encryptJson } from "@/lib/crypto";
 import { env } from "@/lib/env";
 import { completeAutomation } from "@/lib/onboarding";
-import { NI_NUMBER_ERROR, normaliseAccountNumber, normaliseNiNumber, normaliseSortCode } from "@/lib/staff";
+import {
+  GENDERS,
+  medicalFields,
+  NI_NUMBER_ERROR,
+  normaliseAccountNumber,
+  normaliseIdNumber,
+  normaliseNiNumber,
+  normaliseSortCode,
+} from "@/lib/staff";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { findUsableLink } from "../link";
 
 const REQUIRED = [
+  "first_name",
+  "last_name",
+  "email",
   "date_of_birth",
   "mobile_phone",
   "address_line1",
@@ -37,6 +48,13 @@ export async function submitStarterForm(token: string, _: ActionState, formData:
   if (!accountNumber) return { error: "The account number should be 8 digits." };
   const dob = text(formData, "date_of_birth")!;
   if (dob > new Date().toISOString().slice(0, 10)) return { error: "Check your date of birth." };
+  const email = text(formData, "email")!.toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { error: "Enter a valid email address." };
+  const gender = text(formData, "gender");
+  if (gender && !GENDERS.includes(gender)) return { error: "Choose a gender." };
+  const passportNumber = normaliseIdNumber(text(formData, "passport_number"));
+  const drivingLicenceNumber = normaliseIdNumber(text(formData, "driving_licence_number"));
+  const hasIdNumbers = Boolean(passportNumber || drivingLicenceNumber);
 
   const db = createAdminClient();
   const name = `${link.employees.first_name} ${link.employees.last_name}`;
@@ -55,8 +73,17 @@ export async function submitStarterForm(token: string, _: ActionState, formData:
   const { error } = await db
     .from("employees")
     .update({
+      first_name: text(formData, "first_name")!,
+      middle_name: text(formData, "middle_name"),
+      last_name: text(formData, "last_name")!,
+      nickname: text(formData, "nickname"),
+      gender,
       date_of_birth: dob,
+      nationality: text(formData, "nationality"),
+      place_of_birth: text(formData, "place_of_birth"),
+      email,
       mobile_phone: text(formData, "mobile_phone"),
+      home_phone: text(formData, "home_phone"),
       address_line1: text(formData, "address_line1"),
       address_line2: text(formData, "address_line2"),
       town: text(formData, "town"),
@@ -64,6 +91,8 @@ export async function submitStarterForm(token: string, _: ActionState, formData:
       emergency_contact_name: text(formData, "emergency_contact_name"),
       emergency_contact_relationship: text(formData, "emergency_contact_relationship"),
       emergency_contact_phone: text(formData, "emergency_contact_phone"),
+      emergency_contact_address: text(formData, "emergency_contact_address"),
+      special_notes: text(formData, "special_notes"),
       ni_number: niNumber,
       info_form_submitted_at: now,
       bank_details_received_at: now,
@@ -77,8 +106,23 @@ export async function submitStarterForm(token: string, _: ActionState, formData:
         updated_at: now,
         updated_by_name: `${name} (form)`,
       });
-  if (error || bankError) {
-    console.error(error ?? bankError);
+  const { error: medicalError } =
+    error || bankError
+      ? { error: null }
+      : await db
+          .from("employee_medical")
+          .upsert({ employee_id: link.employee_id, ...medicalFields(formData), updated_at: now, updated_by_name: `${name} (form)` });
+  const { error: idError } =
+    error || bankError || medicalError || !hasIdNumbers
+      ? { error: null }
+      : await db.from("employee_id_numbers").upsert({
+          employee_id: link.employee_id,
+          encrypted: encryptJson({ passportNumber, drivingLicenceNumber }, env.bankDetailsKey()),
+          updated_at: now,
+          updated_by_name: `${name} (form)`,
+        });
+  if (error || bankError || medicalError || idError) {
+    console.error(error ?? bankError ?? medicalError ?? idError);
     await db.from("starter_form_links").update({ used_at: null }).eq("id", link.id);
     return { error: "Something went wrong saving your details. Please try again." };
   }

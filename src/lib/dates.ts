@@ -28,6 +28,13 @@ export function formatDate(iso: string | null | undefined) {
   );
 }
 
+// DD/MM/YYYY, e.g. 05/03/1990.
+export function formatDateNumeric(iso: string | null | undefined) {
+  if (!iso) return "";
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return `${d}/${m}/${y}`;
+}
+
 // Whole years and months from start to end (end defaults to today).
 export function lengthOfService(start: string, end: string) {
   const [sy, sm, sd] = start.split("-").map(Number);

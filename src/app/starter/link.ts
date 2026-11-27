@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export async function findUsableLink(token: string) {
   const { data } = await createAdminClient()
     .from("starter_form_links")
-    .select("id, employee_id, used_at, revoked_at, expires_at, employees(first_name, last_name, leave_date)")
+    .select("id, employee_id, used_at, revoked_at, expires_at, employees(first_name, middle_name, last_name, email, leave_date)")
     .eq("token_hash", hashToken(token))
     .maybeSingle();
   if (!data || data.used_at || data.revoked_at || data.expires_at <= new Date().toISOString() || !data.employees) return null;

@@ -44,6 +44,10 @@ insert into employees (id, first_name, last_name, email, payroll_id) values
 
 insert into employee_bank_details (employee_id, encrypted) values
   ('10000000-0000-0000-0000-000000000001', 'ciphertext');
+insert into employee_id_numbers (employee_id, encrypted) values
+  ('10000000-0000-0000-0000-000000000001', 'ciphertext');
+insert into employee_medical (employee_id, allergies) values
+  ('10000000-0000-0000-0000-000000000001', 'Peanuts');
 insert into contracts (employee_id, title, storage_path) values
   ('10000000-0000-0000-0000-000000000001', 'Contract', 'c/1.pdf');
 insert into employee_training (employee_id, training_type_id, expires_on)
@@ -72,6 +76,8 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a', 'aal2');
 select pg_temp.expect((select count(*) from profiles), 3::bigint, 'owner sees all profiles');
 select pg_temp.expect((select count(*) from employees), 2::bigint, 'owner sees all employees');
 select pg_temp.expect((select count(*) from employee_bank_details), 1::bigint, 'owner sees bank details');
+select pg_temp.expect((select count(*) from employee_id_numbers), 1::bigint, 'owner sees ID numbers');
+select pg_temp.expect((select count(*) from employee_medical), 1::bigint, 'owner sees medical details');
 insert into training_types (name, validity_months) values ('Owner course', 12);
 insert into onboarding_task_templates (title) values ('Owner step');
 insert into child_checklist_templates (title) values ('Owner child step');
@@ -82,6 +88,7 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a', 'aal1');
 select pg_temp.expect((select count(*) from profiles), 1::bigint, 'aal1 owner sees only own profile');
 select pg_temp.expect((select count(*) from employees), 0::bigint, 'aal1 owner sees no employees');
 select pg_temp.expect((select count(*) from employee_bank_details), 0::bigint, 'aal1 owner sees no bank details');
+select pg_temp.expect((select count(*) from employee_medical), 0::bigint, 'aal1 owner sees no medical details');
 select pg_temp.expect((select count(*) from children), 0::bigint, 'aal1 owner sees no children');
 select pg_temp.sign_out();
 
@@ -94,6 +101,10 @@ do $$ begin
   raise exception 'FAIL: manager wrote bank details';
 exception when insufficient_privilege then null;
 end $$;
+select pg_temp.expect((select count(*) from employee_id_numbers), 1::bigint, 'manager sees ID numbers');
+insert into employee_id_numbers (employee_id, encrypted) values ('10000000-0000-0000-0000-000000000002', 'x');
+select pg_temp.expect((select count(*) from employee_medical), 1::bigint, 'manager sees medical details');
+insert into employee_medical (employee_id, blood_type) values ('10000000-0000-0000-0000-000000000002', 'O+');
 select pg_temp.expect((select count(*) from contracts), 1::bigint, 'manager sees contracts');
 select pg_temp.expect((select count(*) from employee_training), 1::bigint, 'manager sees training records');
 select pg_temp.expect((select count(*) from onboarding_tasks), 1::bigint, 'manager sees onboarding tasks');
@@ -200,14 +211,27 @@ do $$ begin
 exception when check_violation then null;
 end $$;
 do $$ begin
+  insert into employees (first_name, last_name, email, gender) values ('Bad', 'Gender', 'bad@example.com', 'Diverse');
+  raise exception 'FAIL: unknown gender stored';
+exception when check_violation then null;
+end $$;
+do $$ begin
   insert into employees (first_name, last_name) values ('No', 'Email');
   raise exception 'FAIL: employee without email stored';
 exception when not_null_violation then null;
 end $$;
 
+do $$ begin
+  insert into employee_medical (employee_id, blood_type) values ('10000000-0000-0000-0000-000000000001', 'Z');
+  raise exception 'FAIL: unknown blood type stored';
+exception when check_violation then null;
+end $$;
+
 -- Inactive / self-signed-up user sees nothing ---------------------------------
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000e', 'aal2');
 select pg_temp.expect((select count(*) from employees), 0::bigint, 'inactive user sees no employees');
+select pg_temp.expect((select count(*) from employee_medical), 0::bigint, 'inactive user sees no medical details');
+select pg_temp.expect((select count(*) from employee_id_numbers), 0::bigint, 'inactive user sees no ID numbers');
 select pg_temp.expect((select count(*) from starter_form_links), 0::bigint, 'inactive user sees no starter links');
 select pg_temp.expect((select count(*) from children), 0::bigint, 'inactive user sees no children');
 select pg_temp.sign_out();
