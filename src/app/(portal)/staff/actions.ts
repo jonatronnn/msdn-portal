@@ -22,6 +22,7 @@ import { checkRecordAutomations, completeAutomation, sendStarterForm } from "@/l
 import {
   CONTRACT_TYPES,
   GENDERS,
+  LEAVE_REASONS,
   medicalFields,
   NI_NUMBER_ERROR,
   normaliseIdNumber,
@@ -212,6 +213,7 @@ export async function endEmployment(id: string, _: ActionState, formData: FormDa
   const leaveDate = text(formData, "leave_date");
   const leaveReason = text(formData, "leave_reason");
   if (!leaveDate || !leaveReason) return { error: "Enter the leave date and reason." };
+  if (!LEAVE_REASONS.includes(leaveReason)) return { error: "Choose a reason." };
 
   const supabase = await createClient();
   const { data: e } = await supabase.from("employees").select("start_date").eq("id", id).single();

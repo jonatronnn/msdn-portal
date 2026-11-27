@@ -56,9 +56,14 @@ export async function getFamlyEmployee(employeeId: string) {
   return data.employees.list.employees[0] ?? null;
 }
 
+// Famly only lists rooms for given sites, so the token's sites are looked up first.
 export async function listFamlyRooms() {
+  const sites = await famly<{ sites: { list: { result: { siteId: string }[] } } }>(`query Sites { sites { list { result { siteId } } } }`);
+  const siteIds = sites.sites.list.result.map((s) => s.siteId);
+  if (!siteIds.length) return [];
   const data = await famly<{ groups: { list: { id: string; title: string; institutionId: string }[] } }>(
-    `query ListRooms { groups { list { id title institutionId } } }`,
+    `query ListRooms($siteIds: [InstitutionId!]) { groups { list(institutionIds: $siteIds) { id title institutionId } } }`,
+    { siteIds },
   );
   return data.groups.list;
 }

@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { Toggle } from "@/components/toggle";
-import { Badge, Card, DetailList, Empty, Field, Input, LinkButton, PageHeader, Select, Table, Td, Textarea } from "@/components/ui";
+import { Badge, Card, DetailList, Empty, Field, Input, LinkButton, PageHeader, Select, Table, Td } from "@/components/ui";
 import { isOwner, requireSession } from "@/lib/auth";
 import { decryptJson } from "@/lib/crypto";
 import { addDays, formatDate, formatDateNumeric, formatLengthOfService, formatTimeUntil, isCurrentEmployee, nextMilestone, todayInLondon } from "@/lib/dates";
 import { env } from "@/lib/env";
-import { type BankDetails, formatAddress, type IdNumbers, formatNiNumber, formatPay, formatSortCode, missingEmploymentDetails } from "@/lib/staff";
+import { type BankDetails, formatAddress, type IdNumbers, LEAVE_REASONS, formatNiNumber, formatPay, formatSortCode, missingEmploymentDetails } from "@/lib/staff";
 import { MAX_FILE_MB } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import type { ShiftDay } from "@/lib/wages";
@@ -374,10 +374,11 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
           <Field label="Completed">
             <Input name="completed_on" type="date" />
           </Field>
-          <Field label="Expires" hint="Blank: worked out from the course.">
+          <Field label="Expires">
             <Input name="expires_on" type="date" />
           </Field>
         </ActionForm>
+        <p className="mt-2 text-xs text-stone-500">Leave Expires blank to work it out from the course length.</p>
       </Card>
 
       <Card title="Contract">
@@ -414,10 +415,11 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
           <Field label="Title">
             <Input name="title" defaultValue="Contract of employment" required />
           </Field>
-          <Field label="Signed contract (PDF)" hint={`Up to ${MAX_FILE_MB}MB.`}>
+          <Field label="Signed contract (PDF)">
             <Input name="file" type="file" accept="application/pdf" required />
           </Field>
         </ActionForm>
+        <p className="mt-2 text-xs text-stone-500">PDF up to {MAX_FILE_MB}MB.</p>
       </Card>
 
       {tasks && tasks.length > 0 && (
@@ -478,7 +480,14 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
                 <Input name="leave_date" type="date" required />
               </Field>
               <Field label="Reason">
-                <Textarea name="leave_reason" required />
+                <Select name="leave_reason" required defaultValue="">
+                  <option value="" disabled>
+                    Choose…
+                  </option>
+                  {LEAVE_REASONS.map((r) => (
+                    <option key={r}>{r}</option>
+                  ))}
+                </Select>
               </Field>
             </div>
           </ActionForm>
