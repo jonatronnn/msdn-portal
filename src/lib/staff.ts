@@ -19,6 +19,21 @@ export const LEAVE_REASONS = [
   "Other",
 ];
 
+// The documents kept under Signed documents. Uploading one with an automation
+// ticks the matching onboarding step, which then links to it.
+export const SIGNED_DOCUMENTS: { name: string; automation?: "contract_uploaded" | "right_to_work" | "dbs" }[] = [
+  { name: "Contract of employment", automation: "contract_uploaded" },
+  { name: "Job description" },
+  { name: "Staff handbook acknowledgement" },
+  { name: "Privacy notice acknowledgement" },
+  { name: "Safeguarding and child protection policy acknowledgement" },
+  { name: "Mobile phone and camera policy acknowledgement" },
+  { name: "Confidentiality agreement" },
+  { name: "Health declaration" },
+  { name: "Right to work evidence", automation: "right_to_work" },
+  { name: "DBS certificate", automation: "dbs" },
+];
+
 export const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Don't know"];
 
 // Countries and regions, for suggesting a place of birth.

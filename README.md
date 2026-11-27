@@ -49,13 +49,16 @@ storage and are only handed out as one-minute links.
   completion and expiry dates. The expiry is worked out from the course length
   if left blank, and expired or soon-to-expire training is flagged on the
   record and the dashboard. The owner edits the list of training types.
-- **Contract** – upload the signed contract PDF.
+- **Signed documents** – a checklist of the documents each person should have
+  on file (contract, policy acknowledgements, right to work evidence, DBS
+  certificate and so on), showing which are missing. Upload each as a PDF.
 - **Onboarding** – *New starter*: enter their name and email and the portal
   creates their record and checklist and emails them the **Important information
   form** (a one-off link, valid for 14 days). What they submit goes straight into
   their record. Checklist steps record who ticked them and when; these tick
   themselves: form sent, form returned, employment details completed, signed
-  contract uploaded. New starters (including Famly imports marked as new
+  contract uploaded, right to work checked and DBS check completed (from the
+  matching upload under Signed documents, which the step then links to). New starters (including Famly imports marked as new
   starters) get the next employee ID automatically: 070, 071
   and so on. If email isn't set up, the manager is shown the link to send
   another way.

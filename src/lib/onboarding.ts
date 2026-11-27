@@ -7,7 +7,7 @@ import { env } from "@/lib/env";
 import { missingEmploymentDetails } from "@/lib/staff";
 
 type Client = SupabaseClient<Database>;
-export type Automation = "form_sent" | "form_returned" | "employment_details" | "contract_uploaded" | "famly";
+export type Automation = "form_sent" | "form_returned" | "employment_details" | "contract_uploaded" | "famly" | "right_to_work" | "dbs";
 
 export const STARTER_LINK_DAYS = 14;
 

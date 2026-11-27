@@ -6,7 +6,7 @@ import { isOwner, requireSession } from "@/lib/auth";
 import { decryptJson } from "@/lib/crypto";
 import { addDays, formatDate, formatDateNumeric, formatLengthOfService, formatTimeUntil, isCurrentEmployee, nextMilestone, todayInLondon } from "@/lib/dates";
 import { env } from "@/lib/env";
-import { type BankDetails, formatAddress, type IdNumbers, LEAVE_REASONS, formatNiNumber, formatPay, formatSortCode, missingEmploymentDetails } from "@/lib/staff";
+import { type BankDetails, formatAddress, type IdNumbers, LEAVE_REASONS, formatNiNumber, formatPay, formatSortCode, missingEmploymentDetails, SIGNED_DOCUMENTS } from "@/lib/staff";
 import { MAX_FILE_MB } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import type { ShiftDay } from "@/lib/wages";
@@ -72,6 +72,17 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
       supabase.from("employee_medical").select("*").eq("employee_id", id).maybeSingle(),
       supabase.from("employee_id_numbers").select("*").eq("employee_id", id).maybeSingle(),
     ]);
+
+  // Signed documents: one row per expected document, plus anything uploaded under another title.
+  const docNames = SIGNED_DOCUMENTS.map((d) => d.name);
+  const uploadedDocs = docNames.filter((name) => contracts?.some((c) => c.title === name));
+  const otherDocTitles = [...new Set((contracts ?? []).map((c) => c.title))].filter((t) => !docNames.includes(t));
+  const firstMissingDoc = docNames.find((name) => !uploadedDocs.includes(name)) ?? docNames[0];
+  // The latest upload behind an onboarding step that ticks itself from Signed documents.
+  const docForTask = (automation: string | null) => {
+    const name = SIGNED_DOCUMENTS.find((d) => d.automation && d.automation === automation)?.name;
+    return name ? contracts?.find((c) => c.title === name) : undefined;
+  };
 
   const current = isCurrentEmployee(e, today);
   const missing = missingEmploymentDetails(e);
@@ -379,41 +390,56 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
         <p className="mt-2 text-xs text-stone-500">Leave Expires blank to work it out from the course length.</p>
       </Card>
 
-      <Card title="Signed documents">
-        {contracts?.length ? (
-          <ul className="mb-6 divide-y divide-stone-100 text-sm">
-            {contracts.map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-4 py-2">
-                <span>
-                  <a href={`/files/contracts/${c.id}`} target="_blank" className="text-brand-800 hover:underline">
-                    {c.title}
-                  </a>{" "}
-                  <span className="text-stone-500">
-                    · uploaded {formatTimestamp(c.uploaded_at)}
-                    {c.uploaded_by_name && ` by ${c.uploaded_by_name}`}
+      <Card title={`Signed documents (${uploadedDocs.length}/${SIGNED_DOCUMENTS.length})`}>
+        <ul className="mb-6 divide-y divide-stone-100 text-sm">
+          {[...SIGNED_DOCUMENTS.map((d) => d.name), ...otherDocTitles].map((name) => {
+            const files = (contracts ?? []).filter((c) => c.title === name);
+            return (
+              <li key={name} className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 py-2">
+                <span className={files.length ? "" : "text-stone-500"}>
+                  <span aria-hidden className={`mr-2 inline-block w-4 ${files.length ? "text-green-700" : "text-stone-300"}`}>
+                    {files.length ? "✓" : "○"}
                   </span>
+                  {name}
                 </span>
-                <form action={removeContract.bind(null, id, c.id)}>
-                  <button className="text-xs text-stone-500 hover:text-red-700 hover:underline">Remove</button>
-                </form>
+                {files.length ? (
+                  <span className="space-y-1 text-right">
+                    {files.map((c) => (
+                      <span key={c.id} className="flex items-center justify-end gap-3">
+                        <a href={`/files/contracts/${c.id}`} target="_blank" className="text-brand-800 hover:underline">
+                          View
+                        </a>
+                        <span className="text-xs text-stone-500">
+                          {formatTimestamp(c.uploaded_at)}
+                          {c.uploaded_by_name && ` by ${c.uploaded_by_name}`}
+                        </span>
+                        <form action={removeContract.bind(null, id, c.id)}>
+                          <button className="text-xs text-stone-500 hover:text-red-700 hover:underline">Remove</button>
+                        </form>
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="text-xs text-red-700">Missing</span>
+                )}
               </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="mb-6">
-            <Empty>No signed documents uploaded.</Empty>
-          </div>
-        )}
+            );
+          })}
+        </ul>
         <ActionForm
           action={uploadContract.bind(null, id)}
           submitLabel="Upload"
           variant="secondary"
           className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
         >
-          <Field label="Title">
-            <Input name="title" defaultValue="Contract of employment" required />
+          <Field label="Document">
+            <Select name="title" required defaultValue={firstMissingDoc}>
+              {SIGNED_DOCUMENTS.map((d) => (
+                <option key={d.name}>{d.name}</option>
+              ))}
+            </Select>
           </Field>
-          <Field label="Signed contract (PDF)">
+          <Field label="File (PDF)">
             <Input name="file" type="file" accept="application/pdf" required />
           </Field>
         </ActionForm>
@@ -434,9 +460,16 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
                     </span>
                   )}
                 </Toggle>
-                <form action={removeTask.bind(null, id, t.id)}>
-                  <button className="text-xs text-stone-500 hover:text-red-700 hover:underline">Remove</button>
-                </form>
+                <span className="flex shrink-0 items-center gap-3">
+                  {t.completed_at && docForTask(t.automation) && (
+                    <a href={`/files/contracts/${docForTask(t.automation)!.id}`} target="_blank" className="text-xs text-brand-800 hover:underline">
+                      View document
+                    </a>
+                  )}
+                  <form action={removeTask.bind(null, id, t.id)}>
+                    <button className="text-xs text-stone-500 hover:text-red-700 hover:underline">Remove</button>
+                  </form>
+                </span>
               </li>
             ))}
           </ul>

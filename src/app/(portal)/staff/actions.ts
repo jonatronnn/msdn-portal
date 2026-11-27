@@ -30,6 +30,7 @@ import {
   normaliseNiNumber,
   normaliseSortCode,
   nextPayrollId,
+  SIGNED_DOCUMENTS,
   QUALIFICATION_LEVELS,
 } from "@/lib/staff";
 import { removeFile, storePdf } from "@/lib/storage";
@@ -330,7 +331,8 @@ export async function removeTraining(id: string, trainingId: string) {
 export async function uploadContract(id: string, _: ActionState, formData: FormData): Promise<ActionState> {
   const session = await requireSession();
   const title = text(formData, "title");
-  if (!title) return { error: "Give the contract a title." };
+  const document = SIGNED_DOCUMENTS.find((d) => d.name === title);
+  if (!title || !document) return { error: "Choose which document this is." };
 
   const stored = await storePdf("contracts", id, formData.get("file") as File | null);
   if ("error" in stored) return stored;
@@ -343,9 +345,9 @@ export async function uploadContract(id: string, _: ActionState, formData: FormD
     await removeFile("contracts", stored.path);
     return failed(error);
   }
-  await completeAutomation(supabase, id, "contract_uploaded", actorName(session));
+  if (document.automation) await completeAutomation(supabase, id, document.automation, actorName(session));
   revalidatePath(`/staff/${id}`);
-  return { message: "Contract uploaded." };
+  return { message: `${title} uploaded.` };
 }
 
 export async function removeContract(id: string, contractId: string) {
