@@ -36,6 +36,7 @@ export const modules: Module[] = [
     items: [
       { href: "/admin/users", label: "Users", icon: "key", roles: owner },
       { href: "/admin/settings", label: "Training & checklist", icon: "sliders", roles: owner },
+      { href: "/admin/pay-rates", label: "Pay rates", icon: "pound", roles: owner },
     ],
   },
 ];

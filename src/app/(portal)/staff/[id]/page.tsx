@@ -6,8 +6,8 @@ import { isOwner, requireSession } from "@/lib/auth";
 import { decryptJson } from "@/lib/crypto";
 import { addDays, formatDate, formatDateNumeric, formatLengthOfService, formatTimeUntil, isCurrentEmployee, nextMilestone, todayInLondon } from "@/lib/dates";
 import { env } from "@/lib/env";
-import { type BankDetails, formatAddress, type IdNumbers, LEAVE_REASONS, formatNiNumber, formatPay, formatSortCode, missingEmploymentDetails } from "@/lib/staff";
-import { MAX_FILE_MB } from "@/lib/storage";
+import { type BankDetails, formatAddress, type IdNumbers, LEAVE_REASONS, formatNiNumber, formatPay, formatSortCode, missingEmploymentDetails, SIGNED_DOCUMENTS } from "@/lib/staff";
+import { hourlyPay, UNPAID_TITLES } from "@/lib/pay";
 import { createClient } from "@/lib/supabase/server";
 import type { ShiftDay } from "@/lib/wages";
 import {
@@ -55,6 +55,7 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
     { data: patterns },
     { data: medical },
     { data: idRow },
+    { data: payRates },
   ] = await Promise.all([
       supabase.from("starter_form_links").select("*").eq("employee_id", id).order("sent_at", { ascending: false }).limit(1),
       supabase
@@ -71,7 +72,27 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
       supabase.from("shift_patterns").select("id, effective_from, week_a_from, created_by_name, shift_pattern_days(*)").eq("employee_id", id),
       supabase.from("employee_medical").select("*").eq("employee_id", id).maybeSingle(),
       supabase.from("employee_id_numbers").select("*").eq("employee_id", id).maybeSingle(),
+      supabase.from("pay_rates").select("key, rate"),
     ]);
+
+  // Signed documents: one row per expected document, plus anything uploaded under another title.
+  const docNames = SIGNED_DOCUMENTS.map((d) => d.name);
+  const uploadedDocs = docNames.filter((name) => contracts?.some((c) => c.title === name));
+  const otherDocTitles = [...new Set((contracts ?? []).map((c) => c.title))].filter((t) => !docNames.includes(t));
+  const firstMissingDoc = docNames.find((name) => !uploadedDocs.includes(name)) ?? docNames[0];
+  // The latest upload behind an onboarding step that ticks itself from Signed documents.
+  const docForTask = (automation: string | null) => {
+    const name = SIGNED_DOCUMENTS.find((d) => d.automation && d.automation === automation)?.name;
+    return name ? contracts?.find((c) => c.title === name) : undefined;
+  };
+
+  const unpaid = UNPAID_TITLES.includes(e.job_title ?? "");
+  const hourly = hourlyPay(e, Object.fromEntries((payRates ?? []).map((r) => [r.key, Number(r.rate)])), today);
+  const payText = hourly
+    ? "rate" in hourly
+      ? `${formatPay(hourly.rate, "hourly")} (${hourly.basis})`
+      : `Add their ${hourly.missing} to work this out`
+    : formatPay(e.pay_rate, e.pay_rate_basis);
 
   const current = isCurrentEmployee(e, today);
   const missing = missingEmploymentDetails(e);
@@ -215,12 +236,16 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
             ["Probation ends", formatDate(e.probation_end_date)],
             ["Working pattern", e.working_pattern],
             ["Contracted hours", e.contracted_hours != null && `${e.contracted_hours} per week`],
-            ["Pay rate", formatPay(e.pay_rate, e.pay_rate_basis)],
+            ...(unpaid ? [] : ([["Pay rate", payText]] as [string, string][])),
+            ["Safeguarding and SEND", [e.is_dsl && "DSL", e.is_senco && "SENCo"].filter(Boolean).join(", ")],
+            ...(e.job_title === "Apprentice"
+              ? ([["Apprenticeship started", formatDate(e.apprenticeship_start_date)]] as [string, string][])
+              : []),
             [
               "Qualification",
               e.qualification_level && [e.qualification_level, formatDate(e.qualification_date)].filter(Boolean).join(", "),
             ],
-            ["Employee / payroll ID", e.payroll_id],
+            ["Employee ID", e.payroll_id],
           ]}
         />
       </Card>
@@ -235,8 +260,8 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
         {!owner ? (
           <p className="text-sm text-stone-600">
             {e.bank_details_received_at
-              ? `On file since ${formatDate(e.bank_details_received_at.slice(0, 10))}. Only the owner can view them.`
-              : "Not provided yet. They're collected on the Important information form."}
+              ? `On file since ${formatDate(e.bank_details_received_at.slice(0, 10))}.`
+              : "Not provided yet."}
           </p>
         ) : (
           <>
@@ -277,7 +302,6 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
       </Card>
 
       <Card title="Medical information">
-        <p className="mb-4 text-xs text-stone-500">Seen by owners and managers only. Never sent to Famly. Changed on Edit details.</p>
         <DetailList
           items={[
             ["Doctor", medical && [medical.doctor_name, medical.doctor_phone, medical.doctor_address].filter(Boolean).join(", ")],
@@ -289,7 +313,6 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
       </Card>
 
       <Card title="Passport and driving licence">
-        <p className="mb-4 text-xs text-stone-500">Seen by owners and managers only, and stored encrypted.</p>
         {idRow && !idNumbers && <p className="mb-4 text-sm text-red-700">These numbers can&apos;t be read. Check BANK_DETAILS_KEY.</p>}
         {idNumbers && idRow ? (
           <div className="mb-4">
@@ -378,48 +401,61 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
             <Input name="expires_on" type="date" />
           </Field>
         </ActionForm>
-        <p className="mt-2 text-xs text-stone-500">Leave Expires blank to work it out from the course length.</p>
       </Card>
 
-      <Card title="Contract">
-        {contracts?.length ? (
-          <ul className="mb-6 divide-y divide-stone-100 text-sm">
-            {contracts.map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-4 py-2">
-                <span>
-                  <a href={`/files/contracts/${c.id}`} target="_blank" className="text-brand-800 hover:underline">
-                    {c.title}
-                  </a>{" "}
-                  <span className="text-stone-500">
-                    · uploaded {formatTimestamp(c.uploaded_at)}
-                    {c.uploaded_by_name && ` by ${c.uploaded_by_name}`}
+      <Card title={`Signed documents (${uploadedDocs.length}/${SIGNED_DOCUMENTS.length})`}>
+        <ul className="mb-6 divide-y divide-stone-100 text-sm">
+          {[...SIGNED_DOCUMENTS.map((d) => d.name), ...otherDocTitles].map((name) => {
+            const files = (contracts ?? []).filter((c) => c.title === name);
+            return (
+              <li key={name} className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 py-2">
+                <span className={files.length ? "" : "text-stone-500"}>
+                  <span aria-hidden className={`mr-2 inline-block w-4 ${files.length ? "text-green-700" : "text-stone-300"}`}>
+                    {files.length ? "✓" : "○"}
                   </span>
+                  {name}
                 </span>
-                <form action={removeContract.bind(null, id, c.id)}>
-                  <button className="text-xs text-stone-500 hover:text-red-700 hover:underline">Remove</button>
-                </form>
+                {files.length ? (
+                  <span className="space-y-1 text-right">
+                    {files.map((c) => (
+                      <span key={c.id} className="flex items-center justify-end gap-3">
+                        <a href={`/files/contracts/${c.id}`} target="_blank" className="text-brand-800 hover:underline">
+                          View
+                        </a>
+                        <span className="text-xs text-stone-500">
+                          {formatTimestamp(c.uploaded_at)}
+                          {c.uploaded_by_name && ` by ${c.uploaded_by_name}`}
+                        </span>
+                        <form action={removeContract.bind(null, id, c.id)}>
+                          <button className="text-xs text-stone-500 hover:text-red-700 hover:underline">Remove</button>
+                        </form>
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="text-xs text-red-700">Missing</span>
+                )}
               </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="mb-6">
-            <Empty>No signed contract uploaded.</Empty>
-          </div>
-        )}
+            );
+          })}
+        </ul>
         <ActionForm
           action={uploadContract.bind(null, id)}
-          submitLabel="Upload signed contract"
+          submitLabel="Upload"
           variant="secondary"
           className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
         >
-          <Field label="Title">
-            <Input name="title" defaultValue="Contract of employment" required />
+          <Field label="Document">
+            <Select name="title" required defaultValue={firstMissingDoc}>
+              {SIGNED_DOCUMENTS.map((d) => (
+                <option key={d.name}>{d.name}</option>
+              ))}
+            </Select>
           </Field>
-          <Field label="Signed contract (PDF)">
+          <Field label="File (PDF)">
             <Input name="file" type="file" accept="application/pdf" required />
           </Field>
         </ActionForm>
-        <p className="mt-2 text-xs text-stone-500">PDF up to {MAX_FILE_MB}MB.</p>
       </Card>
 
       {tasks && tasks.length > 0 && (
@@ -436,9 +472,16 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
                     </span>
                   )}
                 </Toggle>
-                <form action={removeTask.bind(null, id, t.id)}>
-                  <button className="text-xs text-stone-500 hover:text-red-700 hover:underline">Remove</button>
-                </form>
+                <span className="flex shrink-0 items-center gap-3">
+                  {t.completed_at && docForTask(t.automation) && (
+                    <a href={`/files/contracts/${docForTask(t.automation)!.id}`} target="_blank" className="text-xs text-brand-800 hover:underline">
+                      View document
+                    </a>
+                  )}
+                  <form action={removeTask.bind(null, id, t.id)}>
+                    <button className="text-xs text-stone-500 hover:text-red-700 hover:underline">Remove</button>
+                  </form>
+                </span>
               </li>
             ))}
           </ul>
@@ -474,7 +517,6 @@ export default async function EmployeePage({ params }: PageProps<"/staff/[id]">)
             variant="danger"
             confirm={`End ${e.first_name}'s employment? They'll move to the archive after their leave date.`}
           >
-            <p className="text-sm text-stone-600">They move to the archive after their leave date.</p>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Leave date">
                 <Input name="leave_date" type="date" required />

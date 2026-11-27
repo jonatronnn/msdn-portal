@@ -2,6 +2,7 @@ import { ActionForm } from "@/components/action-form";
 import { Card, Field, Input, PageHeader } from "@/components/ui";
 import { requireSession } from "@/lib/auth";
 import { addNewStarter } from "@/app/(portal)/staff/actions";
+import { JobTitleSelect } from "@/app/(portal)/staff/employee-form";
 import { nextPayrollId } from "@/lib/staff";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,10 +15,6 @@ export default async function NewStarterPage() {
     <>
       <PageHeader title="New starter" />
       <Card>
-        <p className="mb-6 text-sm text-stone-600">
-          This creates their record and onboarding checklist. You can add the job, contract, hours and pay details on their
-          page afterwards.
-        </p>
         <ActionForm action={addNewStarter} submitLabel="Create new starter">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="First name *">
@@ -30,12 +27,12 @@ export default async function NewStarterPage() {
               <Input name="email" type="email" required />
             </Field>
             <Field label="Job title">
-              <Input name="job_title" />
+              <JobTitleSelect />
             </Field>
             <Field label="Start date">
               <Input name="start_date" type="date" />
             </Field>
-            <Field label="Employee / payroll ID" hint="The next number, filled in for you.">
+            <Field label="Employee ID">
               <Input name="payroll_id" defaultValue={payrollId} />
             </Field>
           </div>

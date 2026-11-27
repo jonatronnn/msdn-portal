@@ -18,7 +18,7 @@ export async function GET(_: Request, ctx: RouteContext<"/wages/[month]/csv">) {
   if (!month) return new NextResponse("Not found", { status: 404 });
 
   const lines = [
-    ["Staff member", "Payroll ref", "Hours worked", "Holiday hours", "SSP days", "SSP dates", "Overtime hours"],
+    ["Staff member", "Employee ID", "Hours worked", "Holiday hours", "SSP days", "SSP dates", "Overtime hours"],
     ...staff.map((r) => [
       fullName(r.employees),
       r.employees.payroll_id,

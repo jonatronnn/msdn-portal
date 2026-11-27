@@ -1,12 +1,26 @@
 import { Field, Input, Select, Textarea } from "@/components/ui";
 import type { Database } from "@/lib/database.types";
+import { JOB_TITLES } from "@/lib/pay";
 import { BLOOD_TYPES, CONTRACT_TYPES, countryNames, formatNiNumber, GENDERS, type MedicalDetails, QUALIFICATION_LEVELS } from "@/lib/staff";
 
 type Employee = Partial<Database["public"]["Tables"]["employees"]["Row"]>;
 
 const v = (value: string | number | null | undefined) => (value == null ? "" : String(value));
 
-// Details managers enter, plus the payroll reference.
+// The job titles, keeping an older free-text title until it's changed.
+export function JobTitleSelect({ value, required }: { value?: string | null; required?: boolean }) {
+  return (
+    <Select name="job_title" defaultValue={v(value)} required={required}>
+      <option value="">Choose…</option>
+      {value && !JOB_TITLES.includes(value) && <option value={value}>{value} (old title: choose a new one)</option>}
+      {JOB_TITLES.map((t) => (
+        <option key={t}>{t}</option>
+      ))}
+    </Select>
+  );
+}
+
+// Details managers enter, plus the employee ID.
 export function EmploymentFields({ employee = {} }: { employee?: Employee }) {
   return (
     <div className="space-y-6">
@@ -21,7 +35,7 @@ export function EmploymentFields({ employee = {} }: { employee?: Employee }) {
         <Field label="Last name *">
           <Input name="last_name" defaultValue={v(employee.last_name)} required />
         </Field>
-        <Field label="Email *" hint="The Important information form is sent here.">
+        <Field label="Email *">
           <Input name="email" type="email" defaultValue={v(employee.email)} required />
         </Field>
       </fieldset>
@@ -29,7 +43,7 @@ export function EmploymentFields({ employee = {} }: { employee?: Employee }) {
       <fieldset className="grid gap-4 sm:grid-cols-2">
         <legend className="mb-2 font-semibold">Job and contract</legend>
         <Field label="Job title *">
-          <Input name="job_title" defaultValue={v(employee.job_title)} required />
+          <JobTitleSelect value={employee.job_title} required />
         </Field>
         <Field label="Employment start date *">
           <Input name="start_date" type="date" defaultValue={v(employee.start_date)} required />
@@ -42,7 +56,7 @@ export function EmploymentFields({ employee = {} }: { employee?: Employee }) {
             ))}
           </Select>
         </Field>
-        <Field label="Contract end date" hint="For fixed-term contracts.">
+        <Field label="Contract end date">
           <Input name="contract_end_date" type="date" defaultValue={v(employee.contract_end_date)} />
         </Field>
         <Field label="Notice period">
@@ -61,16 +75,22 @@ export function EmploymentFields({ employee = {} }: { employee?: Employee }) {
         <Field label="Contracted hours per week">
           <Input name="contracted_hours" inputMode="decimal" defaultValue={v(employee.contracted_hours)} />
         </Field>
-        <Field label="Pay rate (£)">
-          <Input name="pay_rate" inputMode="decimal" defaultValue={v(employee.pay_rate)} />
+        <Field label="Salary (£ per year, managers only)">
+          <Input name="pay_rate" inputMode="decimal" defaultValue={v(employee.pay_rate_basis === "annual" ? employee.pay_rate : null)} />
         </Field>
-        <Field label="Paid">
-          <Select name="pay_rate_basis" defaultValue={v(employee.pay_rate_basis)}>
-            <option value="">Not recorded</option>
-            <option value="hourly">Per hour</option>
-            <option value="annual">Per year (salary)</option>
-          </Select>
+        <Field label="Apprenticeship start date">
+          <Input name="apprenticeship_start_date" type="date" defaultValue={v(employee.apprenticeship_start_date)} />
         </Field>
+        <div className="flex flex-wrap gap-6 text-sm sm:col-span-2">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="is_dsl" defaultChecked={!!employee.is_dsl} className="h-4 w-4 accent-brand-700" />
+            DSL (designated safeguarding lead)
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="is_senco" defaultChecked={!!employee.is_senco} className="h-4 w-4 accent-brand-700" />
+            SENCo
+          </label>
+        </div>
       </fieldset>
 
       <fieldset className="grid gap-4 sm:grid-cols-2">
@@ -86,7 +106,7 @@ export function EmploymentFields({ employee = {} }: { employee?: Employee }) {
         <Field label="Qualification date">
           <Input name="qualification_date" type="date" defaultValue={v(employee.qualification_date)} />
         </Field>
-        <Field label="Employee / payroll ID" hint="Their employee number, also used as their payroll ID in QuickBooks.">
+        <Field label="Employee ID">
           <Input name="payroll_id" defaultValue={v(employee.payroll_id)} />
         </Field>
       </fieldset>
@@ -161,7 +181,7 @@ export function PersonalFields({ employee = {} }: { employee?: Employee }) {
         </div>
       </fieldset>
 
-      <Field label="Special notes" hint="Kept in the portal only: Famly has no place for staff notes.">
+      <Field label="Special notes">
         <Textarea name="special_notes" rows={3} defaultValue={v(employee.special_notes)} />
       </Field>
     </div>

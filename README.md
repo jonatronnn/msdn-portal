@@ -31,16 +31,26 @@ storage and are only handed out as one-minute links.
 
 ## What's in the Staff module
 
+- **Pay rates** (owner only, under Admin) – hourly rates by age band (under 18
+  or apprentice, 18 to 20, 21 and over) and qualification level, flat rates for
+  Room Leaders and Senior Practitioners, and DSL and SENCo extras. Each hourly
+  person's rate is worked out from these and their date of birth, so it moves
+  on the birthday that takes them into a new band. Apprentices move to the rate
+  for their age once they are 19 and past their first year; the dashboard
+  flags this. Managers and Deputy Managers are salaried; Directors have no pay.
+  Rates under the minimum wage are flagged (update `MINIMUM_WAGE` in
+  `src/lib/pay.ts` each April).
 - **Directory** – current staff with length of service (years and months)
   and how long until their next major work anniversary (1, 5, 10, 15 or 20
   years). Former staff are in the **Archive**, with leave date and reason.
 - **Staff records** – the details managers enter (name, email, job title, start
   date, contract type / end date / notice period / probation, working pattern,
-  contracted hours, pay rate, qualification level and date), the details the
+  contracted hours, salary for managers, qualification level and date, DSL and
+  SENCo, apprenticeship start), the details the
   employee gives on their form (name, nickname, gender, date of birth,
   nationality, place of birth, mobile and home phone, home address, emergency
   contact, NI number, passport and driving licence numbers, medical details,
-  bank details, additional information) and their employee / payroll ID.
+  bank details, additional information) and their employee ID.
   Bank details are owner-only; ID numbers and medical details are for owners
   and managers. Bank details and ID numbers are encrypted.
   The record lists anything still to add. Employment is ended from the record
@@ -49,14 +59,17 @@ storage and are only handed out as one-minute links.
   completion and expiry dates. The expiry is worked out from the course length
   if left blank, and expired or soon-to-expire training is flagged on the
   record and the dashboard. The owner edits the list of training types.
-- **Contract** – upload the signed contract PDF.
+- **Signed documents** – a checklist of the documents each person should have
+  on file (contract, policy acknowledgements, right to work evidence, DBS
+  certificate and so on), showing which are missing. Upload each as a PDF.
 - **Onboarding** – *New starter*: enter their name and email and the portal
   creates their record and checklist and emails them the **Important information
   form** (a one-off link, valid for 14 days). What they submit goes straight into
   their record. Checklist steps record who ticked them and when; these tick
   themselves: form sent, form returned, employment details completed, signed
-  contract uploaded. New starters (including Famly imports marked as new
-  starters) get the next employee / payroll ID automatically: PR070, PR071
+  contract uploaded, right to work checked and DBS check completed (from the
+  matching upload under Signed documents, which the step then links to). New starters (including Famly imports marked as new
+  starters) get the next employee ID automatically: 070, 071
   and so on. If email isn't set up, the manager is shown the link to send
   another way.
 - **Famly** – *Import from Famly* lists Famly staff who aren't in the portal yet;

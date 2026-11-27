@@ -11,7 +11,7 @@ const buttonVariants = {
 };
 
 export function buttonClass(variant: keyof typeof buttonVariants = "primary") {
-  return `inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/40 disabled:opacity-50 ${buttonVariants[variant]}`;
+  return `inline-flex items-center justify-center gap-2 rounded-lg border border-transparent px-3.5 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/40 disabled:opacity-50 ${buttonVariants[variant]}`;
 }
 
 export function PageHeader({ title, children }: { title: string; children?: ReactNode }) {
@@ -51,8 +51,21 @@ export function Input(props: ComponentProps<"input">) {
   return <input {...props} className={inputClass} />;
 }
 
+// appearance-none so Safari sizes it like the other inputs; the chevron is drawn here instead.
 export function Select(props: ComponentProps<"select">) {
-  return <select {...props} className={inputClass} />;
+  return (
+    <div className="relative">
+      <select {...props} className={`${inputClass} appearance-none pr-9`} />
+      <svg
+        aria-hidden
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500"
+      >
+        <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" />
+      </svg>
+    </div>
+  );
 }
 
 export function Textarea(props: ComponentProps<"textarea">) {

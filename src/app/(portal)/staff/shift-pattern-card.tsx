@@ -146,7 +146,7 @@ export function ShiftPatternCard({ employeeId, patterns, today }: { employeeId: 
         <summary className="cursor-pointer text-sm text-brand-700">{sorted.length ? "Set a new shift pattern" : "Add a shift pattern"}</summary>
         <ActionForm action={saveShiftPattern.bind(null, employeeId)} submitLabel="Save shift pattern" className="group mt-4 space-y-4">
           <div className="max-w-xs">
-            <Field label="Applies from" hint="A change part-way through a month is used from this day.">
+            <Field label="Applies from">
               <Input name="effective_from" type="date" defaultValue={today} required />
             </Field>
           </div>

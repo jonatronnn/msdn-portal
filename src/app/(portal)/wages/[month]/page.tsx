@@ -217,7 +217,7 @@ export default async function WageMonthPage({ params }: PageProps<"/wages/[month
               </a>
             }
           >
-            <Table head={["Staff member", "Payroll ID", "Hours worked", "Holiday hours", "SSP days", "Overtime hours"]}>
+            <Table head={["Staff member", "Employee ID", "Hours worked", "Holiday hours", "SSP days", "Overtime hours"]}>
               {staff.map((r) => (
                 <tr key={r.id}>
                   <Td>{fullName(r.employees)}</Td>
